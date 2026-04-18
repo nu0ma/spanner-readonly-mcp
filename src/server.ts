@@ -1,6 +1,15 @@
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "@google-cloud/spanner";
 import { z } from "zod";
+
+// Resolved at runtime from the installed package's package.json so the
+// version reported to MCP clients matches what npm actually shipped.
+const PACKAGE_VERSION = (
+  JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8")
+  ) as { version: string }
+).version;
 
 // Leading-whitespace class includes ASCII \s plus BOM, NBSP, and zero-width
 // spaces (U+200B..U+200D), which some clients prepend to slip past naive guards.
@@ -56,7 +65,7 @@ async function readOnlyQuery(
 export function createServer(database: Database): McpServer {
   const server = new McpServer({
     name: "spanner-readonly",
-    version: "1.0.0",
+    version: PACKAGE_VERSION,
   });
 
   server.tool(

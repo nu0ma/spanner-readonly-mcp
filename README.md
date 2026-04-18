@@ -31,16 +31,16 @@ pnpm build
 
 ## Usage
 
-### Claude Code Plugin (recommended)
+### Claude Code Plugin
 
-This repo ships as a Claude Code plugin. Install from this GitHub repo directly:
+This repo doubles as a Claude Code plugin marketplace. Register it and install the plugin:
 
 ```bash
 /plugin marketplace add nu0ma/spanner-readonly-mcp
 /plugin install readonly-spanner@readonly-spanner-mcp
 ```
 
-Then set the required env vars (see below) in your shell before launching Claude Code. The plugin launches the server via `npx -y spanner-readonly-mcp@latest`.
+The plugin launches the server via `npx -y spanner-readonly-mcp@latest`; set `SPANNER_PROJECT` / `SPANNER_INSTANCE` / `SPANNER_DATABASE` in your shell before starting Claude Code.
 
 ### Claude Desktop
 
