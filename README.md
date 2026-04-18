@@ -33,11 +33,11 @@ pnpm build
 
 ### Claude Code Plugin
 
-This repo is packaged as a Claude Code plugin. Until submission to the official marketplace is approved, install locally:
+This repo doubles as a Claude Code plugin marketplace. Register it and install the plugin:
 
 ```bash
-git clone https://github.com/nu0ma/spanner-readonly-mcp
-claude --plugin-dir ./spanner-readonly-mcp
+/plugin marketplace add nu0ma/spanner-readonly-mcp
+/plugin install readonly-spanner@readonly-spanner-mcp
 ```
 
 The plugin launches the server via `npx -y spanner-readonly-mcp@latest`; set `SPANNER_PROJECT` / `SPANNER_INSTANCE` / `SPANNER_DATABASE` in your shell before starting Claude Code.
@@ -50,8 +50,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 {
   "mcpServers": {
     "spanner": {
-      "command": "node",
-      "args": ["/absolute/path/to/spanner-readonly-mcp/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "spanner-readonly-mcp@latest"],
       "env": {
         "SPANNER_PROJECT": "my-project",
         "SPANNER_INSTANCE": "my-instance",
@@ -70,8 +70,8 @@ Add to `~/.claude/settings.json`:
 {
   "mcpServers": {
     "spanner": {
-      "command": "node",
-      "args": ["/absolute/path/to/spanner-readonly-mcp/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "spanner-readonly-mcp@latest"],
       "env": {
         "SPANNER_PROJECT": "my-project",
         "SPANNER_INSTANCE": "my-instance",
