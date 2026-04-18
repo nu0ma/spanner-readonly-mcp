@@ -51,6 +51,18 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
+      - name: Sync plugin manifest version
+        env:
+          VERSION: ${{ env.VERSION }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = '.claude-plugin/plugin.json';
+            const m = JSON.parse(fs.readFileSync(path, 'utf8'));
+            m.version = process.env.VERSION;
+            fs.writeFileSync(path, JSON.stringify(m, null, 2) + '\n');
+          "
+
       - name: Get release notes
         id: release-notes
         env:

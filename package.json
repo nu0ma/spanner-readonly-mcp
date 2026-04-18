@@ -4,12 +4,12 @@
   "description": "Read-only MCP server for Google Cloud Spanner",
   "license": "MIT",
   "author": "nu0ma",
-  "homepage": "https://github.com/nu0ma/readonly-spanner-mcp",
+  "homepage": "https://github.com/nu0ma/spanner-readonly-mcp",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nu0ma/readonly-spanner-mcp.git"
+    "url": "git+https://github.com/nu0ma/spanner-readonly-mcp.git"
   },
-  "bugs": "https://github.com/nu0ma/readonly-spanner-mcp/issues",
+  "bugs": "https://github.com/nu0ma/spanner-readonly-mcp/issues",
   "keywords": [
     "mcp",
     "spanner",
