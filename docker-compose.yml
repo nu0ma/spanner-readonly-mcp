@@ -1,6 +1,9 @@
 services:
   spanner-emulator:
-    image: gcr.io/cloud-spanner-emulator/emulator:latest
+    # Pinned to the `:latest` digest at the time of this commit so CI and local
+    # dev are reproducible. Bump deliberately when adopting a new emulator
+    # release; do not revert to a moving tag.
+    image: gcr.io/cloud-spanner-emulator/emulator@sha256:350fa0e504aff363c386a237ef4755f3332deca6f6aa3335664c5b8245495e9c
     ports:
       - "127.0.0.1:9010:9010"
       - "127.0.0.1:9020:9020"

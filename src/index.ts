@@ -25,10 +25,20 @@ async function main() {
   console.error("Spanner read-only MCP server started");
 }
 
-function shutdown() {
-  database.close();
-  spanner.close();
-  process.exit(0);
+let shuttingDown = false;
+async function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  let exitCode = 0;
+  try {
+    await server.close();
+    await database.close();
+    await spanner.close();
+  } catch (error) {
+    console.error("Shutdown error:", error);
+    exitCode = 1;
+  }
+  process.exit(exitCode);
 }
 
 process.on("SIGINT", shutdown);
