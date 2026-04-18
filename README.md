@@ -6,7 +6,7 @@ A read-only [MCP](https://modelcontextprotocol.io/) server for Google Cloud Span
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 24+ (latest LTS)
 - A Google Cloud project with a Spanner database
 - [Application Default Credentials (ADC)](https://cloud.google.com/docs/authentication/application-default-credentials)
 
@@ -95,10 +95,14 @@ Use `pnpm dev` during development to skip the build step.
 
 Writes are blocked even if your IAM credentials have write permissions. Two layers enforce this:
 
-1. **Application layer**: A regex rejects INSERT, UPDATE, UPSERT, DELETE, and all DDL statements before they reach Spanner.
-2. **Transaction layer**: Every query runs inside a Spanner [read-only snapshot transaction](https://cloud.google.com/spanner/docs/transactions#read-only_transactions) (`database.getSnapshot()`). The Snapshot class does not expose DML methods, and the Spanner backend rejects any mutation attempt within a read-only transaction.
+1. **Application layer (best-effort)**: A regex rejects common mutation keywords (INSERT, UPDATE, UPSERT, DELETE, MERGE, and DDL/DCL) before they reach Spanner. This is an early-failure convenience, **not a security boundary** — payloads can trivially be rewritten (comments, CTE wrapping, parenthesization) to slip past it.
+2. **Transaction layer (authoritative)**: Every query runs inside a Spanner [read-only snapshot transaction](https://cloud.google.com/spanner/docs/transactions#read-only_transactions) (`database.getSnapshot()`). The Snapshot class does not expose DML methods, and the Spanner backend rejects any mutation attempt within a read-only transaction. **This is the real guarantee.**
 
-For defense in depth, grant only `roles/spanner.databaseReader` to the service account.
+Error messages returned to clients are sanitized (first line only, prefixed `REGEX_BLOCKED:` or `SPANNER_ERROR:`) to avoid leaking stack traces or internal paths.
+
+### IAM least privilege
+
+`execute_query` accepts arbitrary SELECT statements, including queries against `information_schema` and `spanner_sys`. To bound the read surface, grant **only** `roles/spanner.databaseReader` to the service account — do not rely on application-level filtering alone.
 
 ## License
 
@@ -112,7 +116,7 @@ Google Cloud Spanner 向けの読み取り専用 [MCP](https://modelcontextproto
 
 ## 前提条件
 
-- Node.js 18 以上
+- Node.js 24 以上 (最新 LTS)
 - Spanner データベースを持つ Google Cloud プロジェクト
 - [アプリケーションのデフォルト認証情報 (ADC)](https://cloud.google.com/docs/authentication/application-default-credentials)
 
@@ -201,10 +205,14 @@ pnpm start
 
 IAM 認証情報に書き込み権限があっても、書き込みはブロックされます。2 層で強制しています:
 
-1. **アプリケーション層**: INSERT / UPDATE / UPSERT / DELETE およびすべての DDL 文を、Spanner に到達する前に正規表現で拒否します。
-2. **トランザクション層**: すべてのクエリは Spanner の[読み取り専用スナップショットトランザクション](https://cloud.google.com/spanner/docs/transactions#read-only_transactions) (`database.getSnapshot()`) 内で実行されます。Snapshot クラスは DML メソッドを公開しておらず、Spanner バックエンドも読み取り専用トランザクション内での変更操作を拒否します。
+1. **アプリケーション層（ベストエフォート）**: INSERT / UPDATE / UPSERT / DELETE / MERGE / DDL / DCL などの変更系キーワードを、Spanner に到達する前に正規表現で拒否します。これは早期失敗のための利便性であり、**セキュリティ境界ではありません**。コメント・CTE・括弧などでペイロードを書き換えれば容易に回避できます。
+2. **トランザクション層（本質的な保証）**: すべてのクエリは Spanner の[読み取り専用スナップショットトランザクション](https://cloud.google.com/spanner/docs/transactions#read-only_transactions) (`database.getSnapshot()`) 内で実行されます。Snapshot クラスは DML メソッドを公開しておらず、Spanner バックエンドも読み取り専用トランザクション内での変更操作を拒否します。**こちらが実効的な保証層です。**
 
-多層防御のため、サービスアカウントには `roles/spanner.databaseReader` のみを付与することを推奨します。
+クライアントに返すエラーメッセージはサニタイズされます（1 行目のみ、`REGEX_BLOCKED:` または `SPANNER_ERROR:` プレフィックス付き）。スタックトレースや内部パスは漏洩しません。
+
+### IAM 最小権限
+
+`execute_query` は `information_schema` や `spanner_sys` を含む任意の SELECT 文を受け付けます。読み取り範囲を限定するには、サービスアカウントには **必ず** `roles/spanner.databaseReader` のみを付与してください。アプリケーション側のフィルタに依存してはいけません。
 
 ## ライセンス
 

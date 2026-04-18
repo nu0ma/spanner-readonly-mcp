@@ -4,7 +4,7 @@
   "description": "Read-only MCP server for Google Cloud Spanner",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   },
   "type": "module",
   "main": "dist/index.mjs",
@@ -19,15 +19,15 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@google-cloud/spanner": "^8.6.0",
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^4.3.6"
+    "@google-cloud/spanner": "8.6.0",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
-    "tsdown": "^0.21.9",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.4"
+    "@types/node": "25.6.0",
+    "tsdown": "0.21.9",
+    "tsx": "4.21.0",
+    "typescript": "6.0.3",
+    "vitest": "4.1.4"
   }
 }

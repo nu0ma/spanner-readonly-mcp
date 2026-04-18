@@ -2,8 +2,19 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "@google-cloud/spanner";
 import { z } from "zod";
 
-const FORBIDDEN_PATTERN =
-  /^\s*(INSERT|UPDATE|UPSERT|DELETE|DROP|CREATE|ALTER|TRUNCATE|MERGE|GRANT|REVOKE)\b/i;
+// Leading-whitespace class includes ASCII \s plus BOM, NBSP, and zero-width
+// spaces (U+200B..U+200D), which some clients prepend to slip past naive guards.
+const LEADING_WS = "[\\s\\uFEFF\\u00A0\\u200B-\\u200D]*";
+const FORBIDDEN_PATTERN = new RegExp(
+  `^${LEADING_WS}(INSERT|UPDATE|UPSERT|DELETE|DROP|CREATE|ALTER|TRUNCATE|MERGE|GRANT|REVOKE|RENAME|ANALYZE|CALL)\\b`,
+  "i"
+);
+
+class RegexBlockedError extends Error {
+  constructor() {
+    super("REGEX_BLOCKED: Only SELECT queries are allowed. This is a read-only server.");
+  }
+}
 
 function ok(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
@@ -13,6 +24,15 @@ function fail(msg: string) {
   return { content: [{ type: "text" as const, text: msg }], isError: true as const };
 }
 
+function sanitize(error: unknown): string {
+  if (error instanceof RegexBlockedError) return error.message;
+  const msg = error instanceof Error ? error.message : String(error);
+  // Strip file paths, stack frames, and anything after the first newline to
+  // avoid leaking internal details via error messages.
+  const firstLine = msg.split("\n")[0];
+  return `SPANNER_ERROR: ${firstLine}`;
+}
+
 async function readOnlyQuery(
   database: Database,
   sql: string,
@@ -20,9 +40,7 @@ async function readOnlyQuery(
 ): Promise<any[]> {
   const normalized = sql.trim().replace(/;\s*$/, "");
   if (FORBIDDEN_PATTERN.test(normalized)) {
-    throw new Error(
-      "Only SELECT queries are allowed. This is a read-only server."
-    );
+    throw new RegexBlockedError();
   }
   const [snapshot] = await database.getSnapshot();
   try {
@@ -56,7 +74,7 @@ export function createServer(database: Database): McpServer {
         );
         return ok(results);
       } catch (error) {
-        return fail(`Error listing tables: ${error}`);
+        return fail(sanitize(error));
       }
     }
   );
@@ -80,7 +98,7 @@ export function createServer(database: Database): McpServer {
         }
         return ok(columns);
       } catch (error) {
-        return fail(`Error describing table: ${error}`);
+        return fail(sanitize(error));
       }
     }
   );
@@ -108,7 +126,7 @@ export function createServer(database: Database): McpServer {
         const indexes = await readOnlyQuery(database, sql, params);
         return ok(indexes);
       } catch (error) {
-        return fail(`Error listing indexes: ${error}`);
+        return fail(sanitize(error));
       }
     }
   );
@@ -124,7 +142,7 @@ export function createServer(database: Database): McpServer {
         const results = await readOnlyQuery(database, sql);
         return ok({ row_count: results.length, rows: results });
       } catch (error) {
-        return fail(`Error executing query: ${error}`);
+        return fail(sanitize(error));
       }
     }
   );

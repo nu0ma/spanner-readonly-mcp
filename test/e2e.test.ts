@@ -34,6 +34,10 @@ function parseContent(result: Awaited<ReturnType<typeof client.callTool>>): any 
   return JSON.parse(text[0].text);
 }
 
+function errorText(result: Awaited<ReturnType<typeof client.callTool>>): string {
+  return (result.content as Array<{ type: string; text: string }>)[0].text;
+}
+
 async function getOrCreateInstance(spanner: Spanner): Promise<Instance> {
   const instance = spanner.instance(INSTANCE_ID);
   const [exists] = await instance.exists();
@@ -229,7 +233,8 @@ describe("execute_query", () => {
       arguments: { sql: "INSERT INTO Users (user_id, name) VALUES ('u3', 'Eve')" },
     });
     expect(result.isError).toBe(true);
-    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    const text = errorText(result);
+    expect(text).toMatch(/^REGEX_BLOCKED:/);
     expect(text).toContain("Only SELECT queries are allowed");
   });
 
@@ -327,12 +332,94 @@ describe("read-only transaction enforcement", () => {
     }
   });
 
-  it("data remains unchanged after all tests", async () => {
+  it("row contents unchanged after all attack attempts", async () => {
+    const users = await client.callTool({
+      name: "execute_query",
+      arguments: {
+        sql: "SELECT user_id, name, email FROM Users ORDER BY user_id",
+      },
+    });
+    expect(parseContent(users).rows).toEqual([
+      { user_id: "u1", name: "Alice", email: "alice@example.com" },
+      { user_id: "u2", name: "Bob", email: null },
+    ]);
+
+    const posts = await client.callTool({
+      name: "execute_query",
+      arguments: {
+        sql: "SELECT post_id, user_id, title, body FROM Posts ORDER BY post_id",
+      },
+    });
+    expect(parseContent(posts).rows).toEqual([
+      { post_id: "p1", user_id: "u1", title: "Hello World", body: "First post" },
+      { post_id: "p2", user_id: "u1", title: "Second Post", body: null },
+    ]);
+  });
+});
+
+describe("regex-layer bypass resistance", () => {
+  // Unicode whitespace / invisible chars that some clients prepend to slip
+  // past naive `^\s*` guards. These MUST be caught by the regex layer.
+  it.each([
+    ["BOM", "\uFEFFDELETE FROM Users WHERE true"],
+    ["NBSP", "\u00A0DELETE FROM Users WHERE true"],
+    ["ZWSP", "\u200BDELETE FROM Users WHERE true"],
+    ["ZWNJ", "\u200CDELETE FROM Users WHERE true"],
+    ["ZWJ", "\u200DDELETE FROM Users WHERE true"],
+    ["mixed", "  \uFEFF\u00A0\n DROP TABLE Users"],
+  ])("regex blocks DML prefixed with %s", async (_label, sql) => {
     const result = await client.callTool({
       name: "execute_query",
-      arguments: { sql: "SELECT COUNT(*) AS cnt FROM Users" },
+      arguments: { sql },
     });
-    const data = parseContent(result);
-    expect(data.rows[0].cnt).toBe(2);
+    expect(result.isError).toBe(true);
+    expect(errorText(result)).toMatch(/^REGEX_BLOCKED:/);
+  });
+
+  it.each([
+    "RENAME TABLE Users TO Evil",
+    "ANALYZE",
+    "CALL some_proc()",
+  ])("regex blocks extended DDL keyword: %s", async (sql) => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: { sql },
+    });
+    expect(result.isError).toBe(true);
+    expect(errorText(result)).toMatch(/^REGEX_BLOCKED:/);
+  });
+});
+
+describe("snapshot-layer guarantee (mutations blocked regardless of regex)", () => {
+  // These payloads bypass the regex (different leading tokens / comments) and
+  // rely on Spanner's read-only snapshot to reject them. This encodes the
+  // defense-in-depth contract as a test.
+  it.each([
+    ["block comment", "/* x */ DELETE FROM Users WHERE true"],
+    ["line comment", "-- x\nDELETE FROM Users WHERE true"],
+    ["multi-statement", "SELECT 1; DELETE FROM Users WHERE true"],
+    ["CTE-wrapped", "WITH x AS (SELECT 1) DELETE FROM Users WHERE true"],
+    ["parenthesized", "(DELETE FROM Users WHERE true)"],
+  ])("blocks %s", async (_label, sql) => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: { sql },
+    });
+    expect(result.isError).toBe(true);
+    // Snapshot/Spanner rejection — not regex. Either path is acceptable as
+    // long as the write never lands.
+    const text = errorText(result);
+    expect(text).toMatch(/^(SPANNER_ERROR|REGEX_BLOCKED):/);
+  });
+
+  it("does not leak stack traces or file paths", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: { sql: "SELECT * FROM NoSuchTable" },
+    });
+    expect(result.isError).toBe(true);
+    const text = errorText(result);
+    expect(text).not.toMatch(/node_modules|\.ts:|\.js:|at [A-Z]/);
+    expect(text.split("\n")).toHaveLength(1);
   });
 });
