@@ -44,16 +44,14 @@ function sanitize(error: unknown): string {
   return `SPANNER_ERROR: ${firstLine}`;
 }
 
-// Convert one row's value tree into JSON-safe values:
-// - INT64 outside Number.MAX_SAFE_INTEGER stays a string (preserves precision);
-//   `row.toJSON()` would otherwise throw on values > 2^53.
-// - INT64 within safe range → number.
-// - BYTES (Buffer) → base64 string instead of `{type:"Buffer",data:[...]}`.
-// - NUMERIC → string (preserves arbitrary precision).
-// - FLOAT64 → number.
-// - TIMESTAMP/DATE are already strings out of `toJSON`, ARRAY/STRUCT recurse.
+// `row.toJSON()` throws on INT64 > 2^53; `wrapNumbers: true` defers that decision
+// to us by handing back Spanner.Int wrappers we can keep as strings. We also
+// normalize the SDK's other numeric wrappers and Buffer (BYTES) — none of which
+// are JSON-safe by default — and fall back to `.toJSON()` for any other Spanner
+// class (SpannerDate / Struct / Interval / Float32 / PGNumeric / PGJsonb).
 function serializeValue(v: unknown): unknown {
   if (v === null || v === undefined) return v;
+  if (typeof v !== "object") return v;
   if (Buffer.isBuffer(v)) return v.toString("base64");
   if (v instanceof Int) {
     const n = Number(v.value);
@@ -62,15 +60,19 @@ function serializeValue(v: unknown): unknown {
   if (v instanceof Float) return Number(v.value);
   if (v instanceof Numeric) return v.value;
   if (Array.isArray(v)) return v.map(serializeValue);
-  if (typeof v === "object" && v.constructor === Object) {
+  const proto = Object.getPrototypeOf(v);
+  if (proto === Object.prototype || proto === null) {
     const out: Record<string, unknown> = {};
-    for (const [k, val] of Object.entries(v)) out[k] = serializeValue(val);
+    for (const k of Object.keys(v)) out[k] = serializeValue((v as Record<string, unknown>)[k]);
     return out;
+  }
+  if (typeof (v as { toJSON?: unknown }).toJSON === "function") {
+    return (v as { toJSON: () => unknown }).toJSON();
   }
   return v;
 }
 
-function serializeRow(row: { toJSON(opts: { wrapNumbers: boolean }): unknown }): unknown {
+function serializeRow(row: any): unknown {
   return serializeValue(row.toJSON({ wrapNumbers: true }));
 }
 
@@ -91,7 +93,7 @@ async function readOnlyQuery(
       gaxOptions: { timeout: QUERY_TIMEOUT_MS },
     };
     const [rows] = await snapshot.run(query);
-    return rows.map((row: any) => serializeRow(row));
+    return rows.map(serializeRow);
   } finally {
     snapshot.end();
   }

@@ -29,6 +29,7 @@ const DDL = [
     safe_int INT64,
     bytes_val BYTES(100),
     numeric_val NUMERIC,
+    date_val DATE,
     str_array ARRAY<STRING(50)>,
     null_val STRING(50),
   ) PRIMARY KEY (id)`,
@@ -102,6 +103,7 @@ beforeAll(async () => {
       safe_int: 42,
       bytes_val: Buffer.from("hello bytes"),
       numeric_val: "12345.67890",
+      date_val: "2024-12-25",
       str_array: ["foo", "bar", null],
       null_val: null,
     },
@@ -495,6 +497,15 @@ describe("row serialization", () => {
     });
     const row = parseContent(result).rows[0];
     expect(String(row.numeric_val)).toMatch(/^12345\.6789/);
+  });
+
+  it("serializes DATE via the toJSON fallback path", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: { sql: "SELECT date_val FROM Types WHERE id = 't1'" },
+    });
+    const row = parseContent(result).rows[0];
+    expect(row.date_val).toBe("2024-12-25");
   });
 
   it("preserves nulls and array element nulls", async () => {
