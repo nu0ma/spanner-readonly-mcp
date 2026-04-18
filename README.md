@@ -36,7 +36,7 @@ pnpm build
 This repo ships as a Claude Code plugin. Install from this GitHub repo directly:
 
 ```bash
-/plugin marketplace add nu0ma/readonly-spanner-mcp
+/plugin marketplace add nu0ma/spanner-readonly-mcp
 /plugin install readonly-spanner@readonly-spanner-mcp
 ```
 
@@ -50,8 +50,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 {
   "mcpServers": {
     "spanner": {
-      "command": "node",
-      "args": ["/absolute/path/to/spanner-readonly-mcp/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "spanner-readonly-mcp@latest"],
       "env": {
         "SPANNER_PROJECT": "my-project",
         "SPANNER_INSTANCE": "my-instance",
@@ -70,8 +70,8 @@ Add to `~/.claude/settings.json`:
 {
   "mcpServers": {
     "spanner": {
-      "command": "node",
-      "args": ["/absolute/path/to/spanner-readonly-mcp/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "spanner-readonly-mcp@latest"],
       "env": {
         "SPANNER_PROJECT": "my-project",
         "SPANNER_INSTANCE": "my-instance",

@@ -1,0 +1,13 @@
+{
+  "name": "readonly-spanner-mcp",
+  "owner": {
+    "name": "nu0ma",
+    "url": "https://github.com/nu0ma"
+  },
+  "plugins": [
+    {
+      "name": "readonly-spanner",
+      "source": "."
+    }
+  ]
+}

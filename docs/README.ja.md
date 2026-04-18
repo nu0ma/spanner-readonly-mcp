@@ -39,8 +39,8 @@ pnpm build
 {
   "mcpServers": {
     "spanner": {
-      "command": "node",
-      "args": ["/absolute/path/to/spanner-readonly-mcp/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "spanner-readonly-mcp@latest"],
       "env": {
         "SPANNER_PROJECT": "my-project",
         "SPANNER_INSTANCE": "my-instance",
@@ -59,8 +59,8 @@ pnpm build
 {
   "mcpServers": {
     "spanner": {
-      "command": "node",
-      "args": ["/absolute/path/to/spanner-readonly-mcp/dist/index.mjs"],
+      "command": "npx",
+      "args": ["-y", "spanner-readonly-mcp@latest"],
       "env": {
         "SPANNER_PROJECT": "my-project",
         "SPANNER_INSTANCE": "my-instance",

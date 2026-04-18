@@ -1,12 +1,14 @@
 {
-  "readonly-spanner": {
-    "type": "stdio",
-    "command": "npx",
-    "args": ["-y", "spanner-readonly-mcp@latest"],
-    "env": {
-      "SPANNER_PROJECT": "${SPANNER_PROJECT}",
-      "SPANNER_INSTANCE": "${SPANNER_INSTANCE}",
-      "SPANNER_DATABASE": "${SPANNER_DATABASE}"
+  "mcpServers": {
+    "readonly-spanner": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "spanner-readonly-mcp@latest"],
+      "env": {
+        "SPANNER_PROJECT": "${SPANNER_PROJECT}",
+        "SPANNER_INSTANCE": "${SPANNER_INSTANCE}",
+        "SPANNER_DATABASE": "${SPANNER_DATABASE}"
+      }
     }
   }
 }

@@ -6,8 +6,8 @@
     "name": "nu0ma",
     "url": "https://github.com/nu0ma"
   },
-  "homepage": "https://github.com/nu0ma/readonly-spanner-mcp",
-  "repository": "https://github.com/nu0ma/readonly-spanner-mcp",
+  "homepage": "https://github.com/nu0ma/spanner-readonly-mcp",
+  "repository": "https://github.com/nu0ma/spanner-readonly-mcp",
   "license": "MIT",
   "keywords": [
     "spanner",
