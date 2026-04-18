@@ -93,9 +93,10 @@ pnpm dev             # ビルドせずにソースから実行
 pnpm test            # vitest (docker compose で Spanner emulator を起動)
 ```
 
-実 Spanner に対して直接実行する場合:
+実 Spanner に対して直接実行する場合 (先に build が必要):
 
 ```bash
+pnpm build
 SPANNER_PROJECT=my-project \
 SPANNER_INSTANCE=my-instance \
 SPANNER_DATABASE=my-database \

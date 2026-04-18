@@ -93,9 +93,10 @@ pnpm dev             # run from source without building
 pnpm test            # vitest, starts the Spanner emulator via docker compose
 ```
 
-Direct execution against a real Spanner instance:
+Direct execution against a real Spanner instance (build first, then run):
 
 ```bash
+pnpm build
 SPANNER_PROJECT=my-project \
 SPANNER_INSTANCE=my-instance \
 SPANNER_DATABASE=my-database \
