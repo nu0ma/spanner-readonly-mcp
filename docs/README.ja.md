@@ -26,7 +26,7 @@ gcloud auth application-default login
 
 ## 使い方
 
-### Claude Code プラグイン (推奨)
+### Claude Code プラグイン
 
 このリポジトリはそのまま Claude Code プラグインマーケットプレイスとして機能します。以下でマーケットプレイスを登録してプラグインをインストールします:
 
@@ -37,14 +37,15 @@ gcloud auth application-default login
 
 プラグインは `npx -y spanner-readonly-mcp@latest` でサーバーを起動します。インストール時に `SPANNER_PROJECT` / `SPANNER_INSTANCE` / `SPANNER_DATABASE` を聞かれ、`settings.json` に保存されます。
 
-### Claude Desktop
+### Claude Code (プラグイン以外)
 
-`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) に以下を追加します:
+プロジェクトルートに `.mcp.json` を作成します:
 
 ```json
 {
   "mcpServers": {
-    "spanner": {
+    "spanner-readonly-mcp": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "spanner-readonly-mcp@latest"],
       "env": {
@@ -57,25 +58,7 @@ gcloud auth application-default login
 }
 ```
 
-### Claude Code
-
-`~/.claude/settings.json` に以下を追加します:
-
-```json
-{
-  "mcpServers": {
-    "spanner": {
-      "command": "npx",
-      "args": ["-y", "spanner-readonly-mcp@latest"],
-      "env": {
-        "SPANNER_PROJECT": "my-project",
-        "SPANNER_INSTANCE": "my-instance",
-        "SPANNER_DATABASE": "my-database"
-      }
-    }
-  }
-}
-```
+Claude Code はセッション起動時に自動で認識し、初回起動時に承認プロンプトを出します。
 
 ## ツール
 
@@ -90,10 +73,12 @@ gcloud auth application-default login
 
 IAM 認証情報に書き込み権限があっても、書き込みはブロックされます。2 層で強制しています:
 
-1. **アプリケーション層（ベストエフォート）**: INSERT / UPDATE / UPSERT / DELETE / MERGE / DDL / DCL などの変更系キーワードを、Spanner に到達する前に正規表現で拒否します。これは早期失敗のための利便性であり、**セキュリティ境界ではありません**。コメント・CTE・括弧などでペイロードを書き換えれば容易に回避できます。
-2. **トランザクション層（本質的な保証）**: すべてのクエリは Spanner の[読み取り専用スナップショットトランザクション](https://cloud.google.com/spanner/docs/transactions#read-only_transactions) (`database.getSnapshot()`) 内で実行されます。Snapshot クラスは DML メソッドを公開しておらず、Spanner バックエンドも読み取り専用トランザクション内での変更操作を拒否します。**こちらが実効的な保証層です。**
+1. **アプリケーション層 (UX、ベストエフォート)**: INSERT / UPDATE / UPSERT / DELETE / MERGE / DDL / DCL などの変更系キーワードを、Spanner に到達する前に正規表現で拒否します。エージェントが誤って変更系クエリを投げた際に分かりやすいエラーを即座に返すためのもので、**セキュリティ境界ではありません**。コメント・CTE・括弧などでペイロードを書き換えれば容易に回避できます。
+2. **トランザクション層 (本質的な保証)**: すべてのクエリは Spanner の[読み取り専用スナップショットトランザクション](https://cloud.google.com/spanner/docs/transactions#read-only_transactions) (`database.getSnapshot()`) 内で実行されます。Snapshot クラスは DML メソッドを公開しておらず、Spanner バックエンドも読み取り専用トランザクション内での変更操作を拒否します。**こちらが実効的な保証層です。**
 
-クライアントに返すエラーメッセージはサニタイズされます（1 行目のみ、`REGEX_BLOCKED:` または `SPANNER_ERROR:` プレフィックス付き）。スタックトレースや内部パスは漏洩しません。
+すべてのスナップショットクエリ (メタデータ系ツール含む) は、worst-case レイテンシを抑えるため 30 秒の `gaxOptions.timeout` を指定して実行されます。
+
+クライアントに返すエラーメッセージはサニタイズされます (1 行目のみ、`REGEX_BLOCKED:` または `SPANNER_ERROR:` プレフィックス付き)。スタックトレースや内部パスは漏洩しません。
 
 ### IAM 最小権限
 
