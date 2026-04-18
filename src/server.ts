@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Database } from "@google-cloud/spanner";
+import { Float, Int, Numeric, type Database } from "@google-cloud/spanner";
 import { z } from "zod";
 
 // Inlined at build time via tsdown `define`. Keeps the runtime free of any
@@ -44,6 +44,38 @@ function sanitize(error: unknown): string {
   return `SPANNER_ERROR: ${firstLine}`;
 }
 
+// `row.toJSON()` throws on INT64 > 2^53; `wrapNumbers: true` defers that decision
+// to us by handing back Spanner.Int wrappers we can keep as strings. We also
+// normalize the SDK's other numeric wrappers and Buffer (BYTES) — none of which
+// are JSON-safe by default — and fall back to `.toJSON()` for any other Spanner
+// class (SpannerDate / Struct / Interval / Float32 / PGNumeric / PGJsonb).
+function serializeValue(v: unknown): unknown {
+  if (v === null || v === undefined) return v;
+  if (typeof v !== "object") return v;
+  if (Buffer.isBuffer(v)) return v.toString("base64");
+  if (v instanceof Int) {
+    const n = Number(v.value);
+    return Number.isSafeInteger(n) ? n : v.value;
+  }
+  if (v instanceof Float) return Number(v.value);
+  if (v instanceof Numeric) return v.value;
+  if (Array.isArray(v)) return v.map(serializeValue);
+  const proto = Object.getPrototypeOf(v);
+  if (proto === Object.prototype || proto === null) {
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(v)) out[k] = serializeValue((v as Record<string, unknown>)[k]);
+    return out;
+  }
+  if (typeof (v as { toJSON?: unknown }).toJSON === "function") {
+    return (v as { toJSON: () => unknown }).toJSON();
+  }
+  return v;
+}
+
+function serializeRow(row: any): unknown {
+  return serializeValue(row.toJSON({ wrapNumbers: true }));
+}
+
 async function readOnlyQuery(
   database: Database,
   sql: string,
@@ -61,7 +93,7 @@ async function readOnlyQuery(
       gaxOptions: { timeout: QUERY_TIMEOUT_MS },
     };
     const [rows] = await snapshot.run(query);
-    return rows.map((row: any) => row.toJSON());
+    return rows.map(serializeRow);
   } finally {
     snapshot.end();
   }
