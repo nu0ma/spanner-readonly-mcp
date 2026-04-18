@@ -88,6 +88,14 @@ jobs:
         if: steps.tag-check.outputs.exists == 'false'
         run: pnpm install --frozen-lockfile
 
+      - name: Typecheck
+        if: steps.tag-check.outputs.exists == 'false'
+        run: pnpm run typecheck
+
+      - name: Test
+        if: steps.tag-check.outputs.exists == 'false'
+        run: pnpm test
+
       - name: Build
         if: steps.tag-check.outputs.exists == 'false'
         run: pnpm run build

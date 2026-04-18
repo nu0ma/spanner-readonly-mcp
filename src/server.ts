@@ -1,15 +1,15 @@
-import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "@google-cloud/spanner";
 import { z } from "zod";
 
-// Resolved at runtime from the installed package's package.json so the
-// version reported to MCP clients matches what npm actually shipped.
-const PACKAGE_VERSION = (
-  JSON.parse(
-    readFileSync(new URL("../package.json", import.meta.url), "utf8")
-  ) as { version: string }
-).version;
+// Inlined at build time via tsdown `define`. Keeps the runtime free of any
+// fs read against `../package.json`, which would couple the bundle to its
+// install-time directory layout.
+declare const __SPANNER_MCP_VERSION__: string;
+const PACKAGE_VERSION: string =
+  typeof __SPANNER_MCP_VERSION__ !== "undefined"
+    ? __SPANNER_MCP_VERSION__
+    : "0.0.0-dev";
 
 export const QUERY_TIMEOUT_MS = 30000;
 
@@ -108,7 +108,10 @@ export function createServer(database: Database): McpServer {
           { table: table_name }
         );
         if (columns.length === 0) {
-          return fail(`Table '${table_name}' not found.`);
+          // JSON-encode to neutralize quote/newline injection from a model-controlled
+          // table_name; cap length so an oversized payload cannot dominate the response.
+          const safe = JSON.stringify(table_name).slice(0, 80);
+          return fail(`Table ${safe} not found.`);
         }
         return ok(columns);
       } catch (error) {

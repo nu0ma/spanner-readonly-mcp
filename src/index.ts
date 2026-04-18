@@ -25,14 +25,26 @@ async function main() {
   console.error("Spanner read-only MCP server started");
 }
 
-function shutdown() {
-  database.close();
-  spanner.close();
+let shuttingDown = false;
+async function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  try {
+    await server.close();
+    await database.close();
+    await spanner.close();
+  } catch (error) {
+    console.error("Shutdown error:", error);
+  }
   process.exit(0);
 }
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+process.on("SIGINT", () => {
+  void shutdown();
+});
+process.on("SIGTERM", () => {
+  void shutdown();
+});
 
 main().catch((error) => {
   console.error("Fatal error:", error);
