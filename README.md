@@ -40,7 +40,7 @@ This repo doubles as a Claude Code plugin marketplace. Register it and install t
 /plugin install spanner-readonly-mcp@spanner-readonly-mcp
 ```
 
-The plugin launches the server via `npx -y spanner-readonly-mcp@latest`; set `SPANNER_PROJECT` / `SPANNER_INSTANCE` / `SPANNER_DATABASE` in your shell before starting Claude Code.
+The plugin launches the server via `npx -y spanner-readonly-mcp@latest`. Claude Code will prompt for `SPANNER_PROJECT`, `SPANNER_INSTANCE`, and `SPANNER_DATABASE` on install and persist them to `settings.json`.
 
 ### Claude Desktop
 
