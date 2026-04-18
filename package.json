@@ -39,9 +39,10 @@
   },
   "scripts": {
     "build": "tsdown",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "pnpm run build",
     "start": "node dist/index.mjs",
     "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },
