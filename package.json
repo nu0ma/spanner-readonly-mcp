@@ -3,6 +3,22 @@
   "version": "1.0.0",
   "description": "Read-only MCP server for Google Cloud Spanner",
   "license": "MIT",
+  "author": "nu0ma",
+  "homepage": "https://github.com/nu0ma/readonly-spanner-mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nu0ma/readonly-spanner-mcp.git"
+  },
+  "bugs": "https://github.com/nu0ma/readonly-spanner-mcp/issues",
+  "keywords": [
+    "mcp",
+    "spanner",
+    "google-cloud",
+    "readonly",
+    "sql",
+    "claude-code",
+    "claude-plugin"
+  ],
   "engines": {
     "node": ">=24"
   },
@@ -11,8 +27,19 @@
   "bin": {
     "spanner-readonly-mcp": "dist/index.mjs"
   },
+  "files": [
+    "dist",
+    ".claude-plugin",
+    ".mcp.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
+    "prepublishOnly": "npm run build",
     "start": "node dist/index.mjs",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
