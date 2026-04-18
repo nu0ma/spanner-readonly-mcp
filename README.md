@@ -14,14 +14,9 @@ A read-only [MCP](https://modelcontextprotocol.io/) server for Google Cloud Span
 gcloud auth application-default login
 ```
 
-## Setup
-
-```bash
-pnpm install
-pnpm build
-```
-
 ## Environment Variables
+
+The server reads these at runtime (the Claude Code plugin prompts for them on install and persists to `settings.json`; for other clients, set them in the MCP config's `env` block).
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -40,7 +35,7 @@ This repo doubles as a Claude Code plugin marketplace. Register it and install t
 /plugin install spanner-readonly-mcp@spanner-readonly-mcp
 ```
 
-The plugin launches the server via `npx -y spanner-readonly-mcp@latest`; set `SPANNER_PROJECT` / `SPANNER_INSTANCE` / `SPANNER_DATABASE` in your shell before starting Claude Code.
+The plugin launches the server via `npx -y spanner-readonly-mcp@latest`. Claude Code will prompt for `SPANNER_PROJECT`, `SPANNER_INSTANCE`, and `SPANNER_DATABASE` on install and persist them to `settings.json`.
 
 ### Claude Desktop
 
@@ -82,17 +77,6 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-### Direct Execution
-
-```bash
-SPANNER_PROJECT=my-project \
-SPANNER_INSTANCE=my-instance \
-SPANNER_DATABASE=my-database \
-pnpm start
-```
-
-Use `pnpm dev` during development to skip the build step.
-
 ## Tools
 
 | Tool | Description |
@@ -114,6 +98,24 @@ Error messages returned to clients are sanitized (first line only, prefixed `REG
 ### IAM least privilege
 
 `execute_query` accepts arbitrary SELECT statements, including queries against `information_schema` and `spanner_sys`. To bound the read surface, grant **only** `roles/spanner.databaseReader` to the service account — do not rely on application-level filtering alone.
+
+## Development
+
+```bash
+pnpm install
+pnpm build           # compile to dist/
+pnpm dev             # run from source without building
+pnpm test            # vitest, starts the Spanner emulator via docker compose
+```
+
+Direct execution against a real Spanner instance:
+
+```bash
+SPANNER_PROJECT=my-project \
+SPANNER_INSTANCE=my-instance \
+SPANNER_DATABASE=my-database \
+pnpm start
+```
 
 ## License
 

@@ -7,7 +7,8 @@
   "plugins": [
     {
       "name": "spanner-readonly-mcp",
-      "source": "./"
+      "source": "./",
+      "description": "Read-only Google Cloud Spanner MCP server. Exposes SELECT-only query execution and schema introspection; writes are blocked by a read-only snapshot."
     }
   ]
 }

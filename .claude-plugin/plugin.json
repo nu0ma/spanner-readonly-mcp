@@ -16,5 +16,16 @@
     "read-only",
     "sql",
     "mcp"
-  ]
+  ],
+  "userConfig": {
+    "SPANNER_PROJECT": {
+      "description": "GCP project ID"
+    },
+    "SPANNER_INSTANCE": {
+      "description": "Spanner instance ID"
+    },
+    "SPANNER_DATABASE": {
+      "description": "Spanner database ID"
+    }
+  }
 }
