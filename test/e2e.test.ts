@@ -164,10 +164,10 @@ describe("describe_table", () => {
     });
     expect(result.isError).toBe(true);
     const text = errorText(result);
-    // Echo must be JSON-encoded — quotes escaped, newlines escaped — and capped.
     expect(text).not.toContain("\n");
-    expect(text).not.toMatch(/'\.\nSYSTEM/);
-    expect(text.length).toBeLessThanOrEqual(120);
+    expect(text).toContain("\\n");
+    // Source caps the echoed value at 80 chars; wrapper "Table  not found." adds 17.
+    expect(text.length).toBeLessThanOrEqual(80 + "Table  not found.".length);
   });
 });
 

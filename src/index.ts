@@ -29,22 +29,20 @@ let shuttingDown = false;
 async function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
+  let exitCode = 0;
   try {
     await server.close();
     await database.close();
     await spanner.close();
   } catch (error) {
     console.error("Shutdown error:", error);
+    exitCode = 1;
   }
-  process.exit(0);
+  process.exit(exitCode);
 }
 
-process.on("SIGINT", () => {
-  void shutdown();
-});
-process.on("SIGTERM", () => {
-  void shutdown();
-});
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 main().catch((error) => {
   console.error("Fatal error:", error);
