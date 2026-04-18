@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Spanner } from "@google-cloud/spanner";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { createServer } from "../src/server.js";
+import { createServer, QUERY_TIMEOUT_MS } from "../src/server.js";
 import type { Database, Instance } from "@google-cloud/spanner";
 
 const PROJECT_ID = "test-project";
@@ -86,7 +86,6 @@ beforeAll(async () => {
     { post_id: "p1", user_id: "u1", title: "Hello World", body: "First post" },
     { post_id: "p2", user_id: "u1", title: "Second Post", body: null },
   ]);
-
   // Wire MCP server + client via InMemoryTransport
   const server = createServer(database);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -421,5 +420,33 @@ describe("snapshot-layer guarantee (mutations blocked regardless of regex)", () 
     const text = errorText(result);
     expect(text).not.toMatch(/node_modules|\.ts:|\.js:|at [A-Z]/);
     expect(text.split("\n")).toHaveLength(1);
+  });
+});
+
+describe("query timeout", () => {
+  it("passes the configured gaxOptions timeout on every snapshot.run query", async () => {
+    const realGetSnapshot = database.getSnapshot.bind(database);
+    let capturedQuery: any = undefined;
+
+    (database as any).getSnapshot = async (...args: any[]) => {
+      const [snapshot] = await realGetSnapshot(...(args as []));
+      const realRun = snapshot.run.bind(snapshot);
+      (snapshot as any).run = async (query: any) => {
+        capturedQuery = query;
+        return realRun(query);
+      };
+      return [snapshot];
+    };
+
+    try {
+      const result = await client.callTool({
+        name: "execute_query",
+        arguments: { sql: "SELECT 1 AS x" },
+      });
+      expect(result.isError).toBeFalsy();
+      expect(capturedQuery?.gaxOptions?.timeout).toBe(QUERY_TIMEOUT_MS);
+    } finally {
+      (database as any).getSnapshot = realGetSnapshot;
+    }
   });
 });

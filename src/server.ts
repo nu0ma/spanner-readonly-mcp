@@ -11,6 +11,8 @@ const PACKAGE_VERSION = (
   ) as { version: string }
 ).version;
 
+export const QUERY_TIMEOUT_MS = 30000;
+
 // Leading-whitespace class includes ASCII \s plus BOM, NBSP, and zero-width
 // spaces (U+200B..U+200D), which some clients prepend to slip past naive guards.
 const LEADING_WS = "[\\s\\uFEFF\\u00A0\\u200B-\\u200D]*";
@@ -53,9 +55,12 @@ async function readOnlyQuery(
   }
   const [snapshot] = await database.getSnapshot();
   try {
-    const [rows] = await snapshot.run(
-      params ? { sql: normalized, params } : normalized
-    );
+    const query = {
+      sql: normalized,
+      ...(params ? { params } : {}),
+      gaxOptions: { timeout: QUERY_TIMEOUT_MS },
+    };
+    const [rows] = await snapshot.run(query);
     return rows.map((row: any) => row.toJSON());
   } finally {
     snapshot.end();
