@@ -145,26 +145,14 @@ export function createServer(database: Database): McpServer {
 
   server.tool(
     "execute_query",
-    "Execute a read-only SQL query (SELECT only) against the Spanner database. Accepts an optional max_rows (default 1000, max 5000); the response includes a truncated flag when the underlying result exceeded the cap.",
+    "Execute a read-only SQL query (SELECT only) against the Spanner database",
     {
       sql: z.string().describe("SQL SELECT query to execute"),
-      max_rows: z
-        .number()
-        .int()
-        .min(1)
-        .max(5000)
-        .optional()
-        .describe(
-          "Maximum rows to return (default 1000, hard ceiling 5000). When the underlying result exceeds this, the response is truncated and `truncated: true` is set."
-        ),
     },
-    async ({ sql, max_rows }) => {
+    async ({ sql }) => {
       try {
-        const cap = max_rows ?? 1000;
         const results = await readOnlyQuery(database, sql);
-        const truncated = results.length > cap;
-        const rows = truncated ? results.slice(0, cap) : results;
-        return ok({ row_count: rows.length, truncated, rows });
+        return ok({ row_count: results.length, rows: results });
       } catch (error) {
         return fail(sanitize(error));
       }

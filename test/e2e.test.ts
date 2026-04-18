@@ -23,10 +23,6 @@ const DDL = [
   ) PRIMARY KEY (user_id, post_id),
   INTERLEAVE IN PARENT Users ON DELETE CASCADE`,
   `CREATE INDEX PostsByTitle ON Posts(title)`,
-  `CREATE TABLE Bulk (
-    id STRING(36) NOT NULL,
-    n INT64 NOT NULL,
-  ) PRIMARY KEY (id)`,
 ];
 
 let spanner: Spanner;
@@ -90,13 +86,6 @@ beforeAll(async () => {
     { post_id: "p1", user_id: "u1", title: "Hello World", body: "First post" },
     { post_id: "p2", user_id: "u1", title: "Second Post", body: null },
   ]);
-  await database.table("Bulk").insert(
-    Array.from({ length: 50 }, (_, i) => ({
-      id: `b-${String(i).padStart(3, "0")}`,
-      n: i,
-    }))
-  );
-
   // Wire MCP server + client via InMemoryTransport
   const server = createServer(database);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -431,62 +420,6 @@ describe("snapshot-layer guarantee (mutations blocked regardless of regex)", () 
     const text = errorText(result);
     expect(text).not.toMatch(/node_modules|\.ts:|\.js:|at [A-Z]/);
     expect(text.split("\n")).toHaveLength(1);
-  });
-});
-
-describe("execute_query row cap", () => {
-  it("defaults to capping at 1000 rows and reports truncation accurately", async () => {
-    const result = await client.callTool({
-      name: "execute_query",
-      arguments: { sql: "SELECT id FROM Bulk" },
-    });
-    const data = parseContent(result);
-    expect(data.row_count).toBe(50);
-    expect(data.truncated).toBe(false);
-    expect(data.rows).toHaveLength(50);
-  });
-
-  it("respects an explicit max_rows and sets truncated when exceeded", async () => {
-    const result = await client.callTool({
-      name: "execute_query",
-      arguments: {
-        sql: "SELECT id FROM Bulk ORDER BY id",
-        max_rows: 10,
-      },
-    });
-    const data = parseContent(result);
-    expect(data.row_count).toBe(10);
-    expect(data.truncated).toBe(true);
-    expect(data.rows).toHaveLength(10);
-  });
-
-  it("does not set truncated when result size equals max_rows exactly", async () => {
-    const result = await client.callTool({
-      name: "execute_query",
-      arguments: {
-        sql: "SELECT id FROM Bulk ORDER BY id LIMIT 5",
-        max_rows: 5,
-      },
-    });
-    const data = parseContent(result);
-    expect(data.row_count).toBe(5);
-    expect(data.truncated).toBe(false);
-  });
-
-  it("rejects max_rows above the hard ceiling of 5000", async () => {
-    const result = await client.callTool({
-      name: "execute_query",
-      arguments: { sql: "SELECT 1 AS x", max_rows: 5001 },
-    });
-    expect(result.isError).toBe(true);
-  });
-
-  it("rejects max_rows below 1", async () => {
-    const result = await client.callTool({
-      name: "execute_query",
-      arguments: { sql: "SELECT 1 AS x", max_rows: 0 },
-    });
-    expect(result.isError).toBe(true);
   });
 });
 
