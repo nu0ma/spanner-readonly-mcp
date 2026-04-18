@@ -23,6 +23,15 @@ const DDL = [
   ) PRIMARY KEY (user_id, post_id),
   INTERLEAVE IN PARENT Users ON DELETE CASCADE`,
   `CREATE INDEX PostsByTitle ON Posts(title)`,
+  `CREATE TABLE Types (
+    id STRING(36) NOT NULL,
+    huge_int INT64,
+    safe_int INT64,
+    bytes_val BYTES(100),
+    numeric_val NUMERIC,
+    str_array ARRAY<STRING(50)>,
+    null_val STRING(50),
+  ) PRIMARY KEY (id)`,
 ];
 
 let spanner: Spanner;
@@ -85,6 +94,17 @@ beforeAll(async () => {
   await database.table("Posts").insert([
     { post_id: "p1", user_id: "u1", title: "Hello World", body: "First post" },
     { post_id: "p2", user_id: "u1", title: "Second Post", body: null },
+  ]);
+  await database.table("Types").insert([
+    {
+      id: "t1",
+      huge_int: "9007199254740993", // 2^53 + 1, beyond JS Number precision
+      safe_int: 42,
+      bytes_val: Buffer.from("hello bytes"),
+      numeric_val: "12345.67890",
+      str_array: ["foo", "bar", null],
+      null_val: null,
+    },
   ]);
   // Wire MCP server + client via InMemoryTransport
   const server = createServer(database);
@@ -435,6 +455,58 @@ describe("snapshot-layer guarantee (mutations blocked regardless of regex)", () 
     const text = errorText(result);
     expect(text).not.toMatch(/node_modules|\.ts:|\.js:|at [A-Z]/);
     expect(text.split("\n")).toHaveLength(1);
+  });
+});
+
+describe("row serialization", () => {
+  it("preserves INT64 > 2^53 as a string (no row.toJSON throw)", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: { sql: "SELECT id, huge_int FROM Types WHERE id = 't1'" },
+    });
+    expect(result.isError).toBeFalsy();
+    const row = parseContent(result).rows[0];
+    expect(row.huge_int).toBe("9007199254740993");
+  });
+
+  it("returns INT64 within safe range as a number", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: { sql: "SELECT safe_int FROM Types WHERE id = 't1'" },
+    });
+    const row = parseContent(result).rows[0];
+    expect(row.safe_int).toBe(42);
+  });
+
+  it("encodes BYTES as base64 (not Buffer JSON)", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: { sql: "SELECT bytes_val FROM Types WHERE id = 't1'" },
+    });
+    const row = parseContent(result).rows[0];
+    expect(typeof row.bytes_val).toBe("string");
+    expect(Buffer.from(row.bytes_val, "base64").toString()).toBe("hello bytes");
+  });
+
+  it("returns NUMERIC as a string (preserves precision)", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: { sql: "SELECT numeric_val FROM Types WHERE id = 't1'" },
+    });
+    const row = parseContent(result).rows[0];
+    expect(String(row.numeric_val)).toMatch(/^12345\.6789/);
+  });
+
+  it("preserves nulls and array element nulls", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: {
+        sql: "SELECT null_val, str_array FROM Types WHERE id = 't1'",
+      },
+    });
+    const row = parseContent(result).rows[0];
+    expect(row.null_val).toBeNull();
+    expect(row.str_array).toEqual(["foo", "bar", null]);
   });
 });
 
