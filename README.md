@@ -84,7 +84,7 @@ Add to `~/.claude/settings.json`:
 | `list_tables` | List all user tables in the database |
 | `describe_table` | Get column definitions (type, nullability, ordinal position) for a table |
 | `list_indexes` | List indexes, optionally filtered by table |
-| `execute_query` | Execute an arbitrary SELECT query. All queries run with a 30-second timeout. |
+| `execute_query` | Execute an arbitrary SELECT query |
 
 ## Read-Only Guarantee
 

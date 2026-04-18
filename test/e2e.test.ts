@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Spanner } from "@google-cloud/spanner";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { createServer } from "../src/server.js";
+import { createServer, QUERY_TIMEOUT_MS } from "../src/server.js";
 import type { Database, Instance } from "@google-cloud/spanner";
 
 const PROJECT_ID = "test-project";
@@ -424,7 +424,7 @@ describe("snapshot-layer guarantee (mutations blocked regardless of regex)", () 
 });
 
 describe("query timeout", () => {
-  it("passes a 30s gaxOptions timeout on every snapshot.run query", async () => {
+  it("passes the configured gaxOptions timeout on every snapshot.run query", async () => {
     const realGetSnapshot = database.getSnapshot.bind(database);
     let capturedQuery: any = undefined;
 
@@ -444,7 +444,7 @@ describe("query timeout", () => {
         arguments: { sql: "SELECT 1 AS x" },
       });
       expect(result.isError).toBeFalsy();
-      expect(capturedQuery?.gaxOptions?.timeout).toBe(30000);
+      expect(capturedQuery?.gaxOptions?.timeout).toBe(QUERY_TIMEOUT_MS);
     } finally {
       (database as any).getSnapshot = realGetSnapshot;
     }
