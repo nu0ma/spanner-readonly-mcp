@@ -37,7 +37,7 @@ This repo doubles as a Claude Code plugin marketplace. Register it and install t
 
 ```bash
 /plugin marketplace add nu0ma/spanner-readonly-mcp
-/plugin install readonly-spanner@readonly-spanner-mcp
+/plugin install spanner-readonly-mcp@spanner-readonly-mcp
 ```
 
 The plugin launches the server via `npx -y spanner-readonly-mcp@latest`; set `SPANNER_PROJECT` / `SPANNER_INSTANCE` / `SPANNER_DATABASE` in your shell before starting Claude Code.

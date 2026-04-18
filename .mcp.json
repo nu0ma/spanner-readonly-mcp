@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "readonly-spanner": {
+    "spanner-readonly-mcp": {
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "spanner-readonly-mcp@latest"],
