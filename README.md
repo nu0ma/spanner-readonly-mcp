@@ -37,14 +37,15 @@ This repo doubles as a Claude Code plugin marketplace. Register it and install t
 
 The plugin launches the server via `npx -y spanner-readonly-mcp@latest`. Claude Code will prompt for `SPANNER_PROJECT`, `SPANNER_INSTANCE`, and `SPANNER_DATABASE` on install and persist them to `settings.json`.
 
-### Claude Desktop
+### Claude Code (without the plugin)
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+Create `.mcp.json` at your project root:
 
 ```json
 {
   "mcpServers": {
-    "spanner": {
+    "spanner-readonly-mcp": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "spanner-readonly-mcp@latest"],
       "env": {
@@ -57,25 +58,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-### Claude Code
-
-Add to `~/.claude/settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "spanner": {
-      "command": "npx",
-      "args": ["-y", "spanner-readonly-mcp@latest"],
-      "env": {
-        "SPANNER_PROJECT": "my-project",
-        "SPANNER_INSTANCE": "my-instance",
-        "SPANNER_DATABASE": "my-database"
-      }
-    }
-  }
-}
-```
+Claude Code picks this up on session start and prompts to approve the server on first launch.
 
 ## Tools
 
@@ -110,9 +93,10 @@ pnpm dev             # run from source without building
 pnpm test            # vitest, starts the Spanner emulator via docker compose
 ```
 
-Direct execution against a real Spanner instance:
+Direct execution against a real Spanner instance (build first, then run):
 
 ```bash
+pnpm build
 SPANNER_PROJECT=my-project \
 SPANNER_INSTANCE=my-instance \
 SPANNER_DATABASE=my-database \
