@@ -1,13 +1,13 @@
 {
   "name": "readonly-spanner",
   "description": "Read-only Google Cloud Spanner MCP server. Exposes SELECT-only query execution and schema introspection (list_tables, describe_table, list_indexes, execute_query). Write operations are blocked by both a forbidden-keyword regex and a Spanner read-only snapshot.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
     "name": "nu0ma",
     "url": "https://github.com/nu0ma"
   },
-  "homepage": "https://github.com/nu0ma/readonly-spanner-mcp",
-  "repository": "https://github.com/nu0ma/readonly-spanner-mcp",
+  "homepage": "https://github.com/nu0ma/spanner-readonly-mcp",
+  "repository": "https://github.com/nu0ma/spanner-readonly-mcp",
   "license": "MIT",
   "keywords": [
     "spanner",
