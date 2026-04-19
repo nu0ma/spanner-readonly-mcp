@@ -7,7 +7,8 @@
       "env": {
         "SPANNER_PROJECT": "${user_config.SPANNER_PROJECT}",
         "SPANNER_INSTANCE": "${user_config.SPANNER_INSTANCE}",
-        "SPANNER_DATABASE": "${user_config.SPANNER_DATABASE}"
+        "SPANNER_DATABASE": "${user_config.SPANNER_DATABASE}",
+        "SPANNER_EMULATOR_HOST": "${user_config.SPANNER_EMULATOR_HOST}"
       }
     }
   }

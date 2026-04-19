@@ -23,6 +23,7 @@ gcloud auth application-default login
 | `SPANNER_PROJECT` | はい | GCP プロジェクト ID |
 | `SPANNER_INSTANCE` | はい | Spanner インスタンス ID |
 | `SPANNER_DATABASE` | はい | Spanner データベース ID |
+| `SPANNER_EMULATOR_HOST` | いいえ | `host:port` (例 `127.0.0.1:9010`) を指定するとローカル Spanner emulator に向く。本番では未設定のまま。 |
 
 ## 使い方
 
