@@ -13,6 +13,9 @@ export default defineConfig({
   banner: { js: "#!/usr/bin/env node" },
   clean: true,
   minify: true,
+  deps: {
+    alwaysBundle: ["@modelcontextprotocol/sdk", "zod"],
+  },
   define: {
     __SPANNER_MCP_VERSION__: JSON.stringify(pkg.version),
   },
