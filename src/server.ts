@@ -12,6 +12,8 @@ const PACKAGE_VERSION: string =
     : "0.0.0-dev";
 
 export const QUERY_TIMEOUT_MS = 30000;
+export const MAX_ROWS = 10000;
+const MAX_IDENTIFIER_LEN = 128;
 
 // Leading-whitespace class includes ASCII \s plus BOM, NBSP, and zero-width
 // spaces (U+200B..U+200D), which some clients prepend to slip past naive guards.
@@ -27,6 +29,12 @@ class RegexBlockedError extends Error {
   }
 }
 
+class RowLimitExceededError extends Error {
+  constructor() {
+    super(`ROW_LIMIT_EXCEEDED: Query returned more than ${MAX_ROWS} rows. Narrow the query or add LIMIT.`);
+  }
+}
+
 function ok(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
@@ -37,6 +45,7 @@ function fail(msg: string) {
 
 function sanitize(error: unknown): string {
   if (error instanceof RegexBlockedError) return error.message;
+  if (error instanceof RowLimitExceededError) return error.message;
   const msg = error instanceof Error ? error.message : String(error);
   // Strip file paths, stack frames, and anything after the first newline to
   // avoid leaking internal details via error messages.
@@ -92,8 +101,20 @@ async function readOnlyQuery(
       ...(params ? { params } : {}),
       gaxOptions: { timeout: QUERY_TIMEOUT_MS },
     };
-    const [rows] = await snapshot.run(query);
-    return rows.map(serializeRow);
+    const rows: unknown[] = [];
+    await new Promise<void>((resolve, reject) => {
+      const stream = snapshot.runStream(query);
+      stream.on("data", (row: unknown) => {
+        if (rows.length >= MAX_ROWS) {
+          stream.destroy(new RowLimitExceededError());
+          return;
+        }
+        rows.push(serializeRow(row));
+      });
+      stream.on("end", () => resolve());
+      stream.on("error", (err) => reject(err));
+    });
+    return rows;
   } finally {
     snapshot.end();
   }
@@ -128,7 +149,12 @@ export function createServer(database: Database): McpServer {
   server.tool(
     "describe_table",
     "Get schema information (columns, types, nullability) for a specific table",
-    { table_name: z.string().describe("Name of the table to describe") },
+    {
+      table_name: z
+        .string()
+        .max(MAX_IDENTIFIER_LEN)
+        .describe("Name of the table to describe"),
+    },
     async ({ table_name }) => {
       try {
         const columns = await readOnlyQuery(
@@ -158,6 +184,7 @@ export function createServer(database: Database): McpServer {
     {
       table_name: z
         .string()
+        .max(MAX_IDENTIFIER_LEN)
         .optional()
         .describe("Table name to list indexes for. Omit to list all indexes."),
     },
@@ -185,10 +212,19 @@ export function createServer(database: Database): McpServer {
     "Execute a read-only SQL query (SELECT only) against the Spanner database",
     {
       sql: z.string().describe("SQL SELECT query to execute"),
+      params: z
+        .record(
+          z.string(),
+          z.union([z.string(), z.number(), z.boolean(), z.null()])
+        )
+        .optional()
+        .describe(
+          "Named parameter bindings (e.g. {userId: 'u1'}) referenced as @userId in sql. Prefer this over string interpolation."
+        ),
     },
-    async ({ sql }) => {
+    async ({ sql, params }) => {
       try {
-        const results = await readOnlyQuery(database, sql);
+        const results = await readOnlyQuery(database, sql, params);
         return ok({ row_count: results.length, rows: results });
       } catch (error) {
         return fail(sanitize(error));

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Spanner } from "@google-cloud/spanner";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { createServer, QUERY_TIMEOUT_MS } from "../src/server.js";
+import { createServer, QUERY_TIMEOUT_MS, MAX_ROWS } from "../src/server.js";
 import type { Database, Instance } from "@google-cloud/spanner";
 
 const PROJECT_ID = "test-project";
@@ -521,6 +521,59 @@ describe("row serialization", () => {
   });
 });
 
+describe("execute_query with params", () => {
+  it("binds named parameters instead of string interpolation", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: {
+        sql: "SELECT name FROM Users WHERE user_id = @uid",
+        params: { uid: "u1" },
+      },
+    });
+    expect(result.isError).toBeFalsy();
+    const data = parseContent(result);
+    expect(data.row_count).toBe(1);
+    expect(data.rows[0].name).toBe("Alice");
+  });
+
+  it("treats parameter values as data, not SQL (injection attempt is inert)", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: {
+        sql: "SELECT name FROM Users WHERE user_id = @uid",
+        params: { uid: "u1' OR '1'='1" },
+      },
+    });
+    expect(result.isError).toBeFalsy();
+    const data = parseContent(result);
+    expect(data.row_count).toBe(0);
+  });
+});
+
+describe("row limit enforcement", () => {
+  it("rejects queries returning more than MAX_ROWS", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: {
+        sql: `SELECT n FROM UNNEST(GENERATE_ARRAY(1, ${MAX_ROWS + 5})) AS n`,
+      },
+    });
+    expect(result.isError).toBe(true);
+    expect(errorText(result)).toMatch(/^ROW_LIMIT_EXCEEDED:/);
+  });
+
+  it("allows queries at exactly MAX_ROWS", async () => {
+    const result = await client.callTool({
+      name: "execute_query",
+      arguments: {
+        sql: `SELECT n FROM UNNEST(GENERATE_ARRAY(1, ${MAX_ROWS})) AS n`,
+      },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(parseContent(result).row_count).toBe(MAX_ROWS);
+  });
+});
+
 describe("query timeout", () => {
   it("passes the configured gaxOptions timeout on every snapshot.run query", async () => {
     const realGetSnapshot = database.getSnapshot.bind(database);
@@ -528,10 +581,10 @@ describe("query timeout", () => {
 
     (database as any).getSnapshot = async (...args: any[]) => {
       const [snapshot] = await realGetSnapshot(...(args as []));
-      const realRun = snapshot.run.bind(snapshot);
-      (snapshot as any).run = async (query: any) => {
+      const realRunStream = snapshot.runStream.bind(snapshot);
+      (snapshot as any).runStream = (query: any) => {
         capturedQuery = query;
-        return realRun(query);
+        return realRunStream(query);
       };
       return [snapshot];
     };
