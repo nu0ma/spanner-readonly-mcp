@@ -1,6 +1,6 @@
 {
   "name": "spanner-readonly-mcp",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Read-only MCP server for Google Cloud Spanner",
   "license": "MIT",
   "author": "nu0ma",
