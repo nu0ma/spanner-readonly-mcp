@@ -3,7 +3,7 @@
     "spanner-readonly-mcp": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "spanner-readonly-mcp@latest"],
+      "args": ["-y", "spanner-readonly-mcp@0.0.8"],
       "env": {
         "SPANNER_PROJECT": "${user_config.SPANNER_PROJECT}",
         "SPANNER_INSTANCE": "${user_config.SPANNER_INSTANCE}",

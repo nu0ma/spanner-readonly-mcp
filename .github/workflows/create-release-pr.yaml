@@ -63,6 +63,22 @@ jobs:
             fs.writeFileSync(path, JSON.stringify(m, null, 2) + '\n');
           "
 
+      - name: Pin .mcp.json npm spec to release version
+        env:
+          VERSION: ${{ env.VERSION }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = '.mcp.json';
+            const text = fs.readFileSync(path, 'utf8');
+            const re = /spanner-readonly-mcp@[A-Za-z0-9._-]+/g;
+            const next = text.replace(re, 'spanner-readonly-mcp@' + process.env.VERSION);
+            if (next === text) {
+              throw new Error('No spanner-readonly-mcp@<spec> found in .mcp.json');
+            }
+            fs.writeFileSync(path, next);
+          "
+
       - name: Get release notes
         id: release-notes
         env:
