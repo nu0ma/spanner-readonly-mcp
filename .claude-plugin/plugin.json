@@ -32,6 +32,11 @@
       "type": "string",
       "title": "Spanner Database",
       "description": "Spanner database ID"
+    },
+    "SPANNER_EMULATOR_HOST": {
+      "type": "string",
+      "title": "Spanner Emulator Host (optional)",
+      "description": "Set to host:port (e.g. 127.0.0.1:9010) to point at a local Spanner emulator instead of real Cloud Spanner. Leave blank for production."
     }
   }
 }
