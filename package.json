@@ -49,15 +49,15 @@
     "inspect": "pnpm exec @modelcontextprotocol/inspector node dist/index.mjs"
   },
   "dependencies": {
-    "@google-cloud/spanner": "8.6.0",
-    "@modelcontextprotocol/sdk": "1.29.0",
-    "zod": "4.3.6"
+    "@google-cloud/spanner": "8.6.0"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
     "@types/node": "25.6.0",
     "tsdown": "0.21.9",
     "tsx": "4.21.0",
     "typescript": "6.0.3",
-    "vitest": "4.1.4"
+    "vitest": "4.1.4",
+    "zod": "4.3.6"
   }
 }
