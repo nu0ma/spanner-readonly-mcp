@@ -36,7 +36,7 @@ gcloud auth application-default login
 /plugin install spanner-readonly-mcp@spanner-readonly-mcp
 ```
 
-プラグインは `npx -y spanner-readonly-mcp@latest` でサーバーを起動します。インストール時に `SPANNER_PROJECT` / `SPANNER_INSTANCE` / `SPANNER_DATABASE` を聞かれ、`settings.json` に保存されます。
+プラグインは `npx -y spanner-readonly-mcp@<pinned-version>` でサーバーを起動します。`.mcp.json` の npm spec はプラグインのリリースバージョンに pin されており、リリース毎に自動 bump されるので、`/plugin update` を実行しない限り走るコードは変わりません。インストール時に `SPANNER_PROJECT` / `SPANNER_INSTANCE` / `SPANNER_DATABASE` を聞かれ、`settings.json` に保存されます。
 
 ### Claude Code (プラグイン以外)
 
@@ -48,7 +48,7 @@ gcloud auth application-default login
     "spanner-readonly-mcp": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "spanner-readonly-mcp@latest"],
+      "args": ["-y", "spanner-readonly-mcp@0.0.8"],
       "env": {
         "SPANNER_PROJECT": "my-project",
         "SPANNER_INSTANCE": "my-instance",

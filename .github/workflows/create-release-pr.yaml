@@ -63,20 +63,29 @@ jobs:
             fs.writeFileSync(path, JSON.stringify(m, null, 2) + '\n');
           "
 
-      - name: Pin .mcp.json npm spec to release version
+      - name: Pin npm spec to release version (.mcp.json + READMEs)
         env:
           VERSION: ${{ env.VERSION }}
         run: |
           node -e "
             const fs = require('fs');
-            const path = '.mcp.json';
-            const text = fs.readFileSync(path, 'utf8');
-            const re = /spanner-readonly-mcp@[A-Za-z0-9._-]+/g;
-            const next = text.replace(re, 'spanner-readonly-mcp@' + process.env.VERSION);
-            if (next === text) {
-              throw new Error('No spanner-readonly-mcp@<spec> found in .mcp.json');
+            // Match an npm version spec (must start with a digit so it cannot
+            // collide with the plugin install syntax 'spanner-readonly-mcp@spanner-readonly-mcp').
+            const re = /spanner-readonly-mcp@\d[A-Za-z0-9._-]*/g;
+            const next = 'spanner-readonly-mcp@' + process.env.VERSION;
+            const required = ['.mcp.json'];
+            const optional = ['README.md', 'docs/README.ja.md'];
+            for (const path of required) {
+              const text = fs.readFileSync(path, 'utf8');
+              if (!text.match(re)) throw new Error('No npm spec found in ' + path);
+              const updated = text.replace(re, next);
+              if (updated !== text) fs.writeFileSync(path, updated);
             }
-            fs.writeFileSync(path, next);
+            for (const path of optional) {
+              const text = fs.readFileSync(path, 'utf8');
+              const updated = text.replace(re, next);
+              if (updated !== text) fs.writeFileSync(path, updated);
+            }
           "
 
       - name: Get release notes

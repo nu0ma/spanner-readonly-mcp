@@ -36,7 +36,7 @@ This repo doubles as a Claude Code plugin marketplace. Register it and install t
 /plugin install spanner-readonly-mcp@spanner-readonly-mcp
 ```
 
-The plugin launches the server via `npx -y spanner-readonly-mcp@latest`. Claude Code will prompt for `SPANNER_PROJECT`, `SPANNER_INSTANCE`, and `SPANNER_DATABASE` on install and persist them to `settings.json`.
+The plugin launches the server via `npx -y spanner-readonly-mcp@<pinned-version>`. The npm spec in the plugin's `.mcp.json` is pinned to the released version of the plugin and auto-bumped at every release, so the code that runs only changes when you go through `/plugin update`. Claude Code will prompt for `SPANNER_PROJECT`, `SPANNER_INSTANCE`, and `SPANNER_DATABASE` on install and persist them to `settings.json`.
 
 ### Claude Code (without the plugin)
 
@@ -48,7 +48,7 @@ Create `.mcp.json` at your project root:
     "spanner-readonly-mcp": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "spanner-readonly-mcp@latest"],
+      "args": ["-y", "spanner-readonly-mcp@0.0.8"],
       "env": {
         "SPANNER_PROJECT": "my-project",
         "SPANNER_INSTANCE": "my-instance",
