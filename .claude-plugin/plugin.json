@@ -19,12 +19,18 @@
   ],
   "userConfig": {
     "SPANNER_PROJECT": {
+      "type": "string",
+      "title": "Spanner Project",
       "description": "GCP project ID"
     },
     "SPANNER_INSTANCE": {
+      "type": "string",
+      "title": "Spanner Instance",
       "description": "Spanner instance ID"
     },
     "SPANNER_DATABASE": {
+      "type": "string",
+      "title": "Spanner Database",
       "description": "Spanner database ID"
     }
   }
