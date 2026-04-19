@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 24
-          # cache: pnpm  # TEMP: disabled to verify Takumi Guard proxy actually fetches packages
+          cache: pnpm
 
       - name: Setup Takumi Guard
         uses: flatt-security/setup-takumi-guard-npm@9a5d797c2085b6326d3a2985c08e3a114b9b88c1 # v1.1.1
