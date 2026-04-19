@@ -45,7 +45,8 @@
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/index.mjs"
   },
   "dependencies": {
     "@google-cloud/spanner": "8.6.0",
