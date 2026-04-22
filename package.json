@@ -45,6 +45,8 @@
     "start": "node dist/index.mjs",
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
     "test": "vitest run",
     "test:watch": "vitest",
     "inspect": "pnpm exec @modelcontextprotocol/inspector node dist/index.mjs"
@@ -53,6 +55,7 @@
     "@google-cloud/spanner": "8.6.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.12",
     "@modelcontextprotocol/sdk": "1.29.0",
     "@types/node": "25.6.0",
     "tsdown": "0.21.9",

@@ -1,4 +1,4 @@
-import { execSync, type ExecSyncOptions } from "node:child_process";
+import { type ExecSyncOptions, execSync } from "node:child_process";
 
 const COMPOSE_OPTS: ExecSyncOptions = {
   cwd: new URL("..", import.meta.url).pathname,
@@ -33,7 +33,7 @@ export function setup() {
   if (!isDockerRunning()) {
     throw new Error(
       "Docker is not running. Start Docker and run tests again.\n" +
-        "  E2E tests require the Spanner emulator: docker compose up -d"
+        "  E2E tests require the Spanner emulator: docker compose up -d",
     );
   }
   execSync("docker compose up -d --wait", COMPOSE_OPTS);

@@ -1,5 +1,5 @@
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { Spanner } from "@google-cloud/spanner";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createServer } from "./server.js";
 
 const PROJECT_ID = process.env.SPANNER_PROJECT;
@@ -8,7 +8,7 @@ const DATABASE_ID = process.env.SPANNER_DATABASE;
 
 if (!PROJECT_ID || !INSTANCE_ID || !DATABASE_ID) {
   console.error(
-    "Required environment variables: SPANNER_PROJECT, SPANNER_INSTANCE, SPANNER_DATABASE"
+    "Required environment variables: SPANNER_PROJECT, SPANNER_INSTANCE, SPANNER_DATABASE",
   );
   process.exit(1);
 }
