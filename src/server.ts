@@ -1,5 +1,5 @@
+import { type Database, Float, Int, Numeric } from "@google-cloud/spanner";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Float, Int, Numeric, type Database } from "@google-cloud/spanner";
 import { z } from "zod";
 
 // Inlined at build time via tsdown `define`. Keeps the runtime free of any
@@ -7,9 +7,7 @@ import { z } from "zod";
 // install-time directory layout.
 declare const __SPANNER_MCP_VERSION__: string;
 const PACKAGE_VERSION: string =
-  typeof __SPANNER_MCP_VERSION__ !== "undefined"
-    ? __SPANNER_MCP_VERSION__
-    : "0.0.0-dev";
+  typeof __SPANNER_MCP_VERSION__ !== "undefined" ? __SPANNER_MCP_VERSION__ : "0.0.0-dev";
 
 export const QUERY_TIMEOUT_MS = 30000;
 export const MAX_ROWS = 10000;
@@ -20,7 +18,7 @@ const MAX_IDENTIFIER_LEN = 128;
 const LEADING_WS = "[\\s\\uFEFF\\u00A0\\u200B-\\u200D]*";
 const FORBIDDEN_PATTERN = new RegExp(
   `^${LEADING_WS}(INSERT|UPDATE|UPSERT|DELETE|DROP|CREATE|ALTER|TRUNCATE|MERGE|GRANT|REVOKE|RENAME|ANALYZE|CALL)\\b`,
-  "i"
+  "i",
 );
 
 class RegexBlockedError extends Error {
@@ -31,7 +29,9 @@ class RegexBlockedError extends Error {
 
 class RowLimitExceededError extends Error {
   constructor() {
-    super(`ROW_LIMIT_EXCEEDED: Query returned more than ${MAX_ROWS} rows. Narrow the query or add LIMIT.`);
+    super(
+      `ROW_LIMIT_EXCEEDED: Query returned more than ${MAX_ROWS} rows. Narrow the query or add LIMIT.`,
+    );
   }
 }
 
@@ -88,7 +88,7 @@ function serializeRow(row: any): unknown {
 async function readOnlyQuery(
   database: Database,
   sql: string,
-  params?: Record<string, string | number | boolean | null>
+  params?: Record<string, string | number | boolean | null>,
 ): Promise<any[]> {
   const normalized = sql.trim().replace(/;\s*$/, "");
   if (FORBIDDEN_PATTERN.test(normalized)) {
@@ -126,34 +126,26 @@ export function createServer(database: Database): McpServer {
     version: PACKAGE_VERSION,
   });
 
-  server.tool(
-    "list_tables",
-    "List all user tables in the Spanner database",
-    {},
-    async () => {
-      try {
-        const results = await readOnlyQuery(
-          database,
-          `SELECT table_name, parent_table_name
+  server.tool("list_tables", "List all user tables in the Spanner database", {}, async () => {
+    try {
+      const results = await readOnlyQuery(
+        database,
+        `SELECT table_name, parent_table_name
            FROM information_schema.tables
            WHERE table_schema = ''
-           ORDER BY table_name`
-        );
-        return ok(results);
-      } catch (error) {
-        return fail(sanitize(error));
-      }
+           ORDER BY table_name`,
+      );
+      return ok(results);
+    } catch (error) {
+      return fail(sanitize(error));
     }
-  );
+  });
 
   server.tool(
     "describe_table",
     "Get schema information (columns, types, nullability) for a specific table",
     {
-      table_name: z
-        .string()
-        .max(MAX_IDENTIFIER_LEN)
-        .describe("Name of the table to describe"),
+      table_name: z.string().max(MAX_IDENTIFIER_LEN).describe("Name of the table to describe"),
     },
     async ({ table_name }) => {
       try {
@@ -163,7 +155,7 @@ export function createServer(database: Database): McpServer {
            FROM information_schema.columns
            WHERE table_name = @table AND table_schema = ''
            ORDER BY ordinal_position`,
-          { table: table_name }
+          { table: table_name },
         );
         if (columns.length === 0) {
           // JSON-encode to neutralize quote/newline injection from a model-controlled
@@ -175,7 +167,7 @@ export function createServer(database: Database): McpServer {
       } catch (error) {
         return fail(sanitize(error));
       }
-    }
+    },
   );
 
   server.tool(
@@ -204,7 +196,7 @@ export function createServer(database: Database): McpServer {
       } catch (error) {
         return fail(sanitize(error));
       }
-    }
+    },
   );
 
   server.tool(
@@ -213,13 +205,10 @@ export function createServer(database: Database): McpServer {
     {
       sql: z.string().describe("SQL SELECT query to execute"),
       params: z
-        .record(
-          z.string(),
-          z.union([z.string(), z.number(), z.boolean(), z.null()])
-        )
+        .record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))
         .optional()
         .describe(
-          "Named parameter bindings (e.g. {userId: 'u1'}) referenced as @userId in sql. Prefer this over string interpolation."
+          "Named parameter bindings (e.g. {userId: 'u1'}) referenced as @userId in sql. Prefer this over string interpolation.",
         ),
     },
     async ({ sql, params }) => {
@@ -229,7 +218,7 @@ export function createServer(database: Database): McpServer {
       } catch (error) {
         return fail(sanitize(error));
       }
-    }
+    },
   );
 
   return server;
