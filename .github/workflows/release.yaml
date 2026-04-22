@@ -14,35 +14,27 @@ on:
         type: string
 
 jobs:
-  release:
+  check:
     if: |
       (github.event_name == 'pull_request' &&
        github.event.pull_request.merged == true &&
        contains(github.event.pull_request.labels.*.name, 'Release')) ||
       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     permissions:
-      contents: write
-      id-token: write
+      contents: read
       pull-requests: write
-
+    outputs:
+      version: ${{ steps.package.outputs.version }}
+      name: ${{ steps.package.outputs.name }}
+      should_release: ${{ steps.tag-check.outputs.should_release }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
-        with:
-          node-version: 24
-          registry-url: "https://registry.npmjs.org"
-          cache: pnpm
 
       - name: Get package info
         id: package
@@ -70,42 +62,80 @@ jobs:
           VERSION: ${{ steps.package.outputs.version }}
         run: |
           if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Update package.json version
-        if: steps.tag-check.outputs.exists == 'false' && github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
+      - name: Comment on PR - Tag Exists
+        if: |
+          github.event_name == 'pull_request' &&
+          steps.tag-check.outputs.should_release == 'false'
         env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          gh pr comment "${PR_NUMBER}" \
+            --body "⚠️ **Release skipped**: Tag v${VERSION} already exists
+
+          Please check the existing release or update the version in package.json."
+
+  release:
+    needs: check
+    if: needs.check.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+          cache: pnpm
+
+      - name: Update package.json version
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
         run: |
           npm version "${VERSION}" --no-git-tag-version
           git add package.json
           echo "✅ Updated package.json to v${VERSION}"
 
       - name: Setup Takumi Guard
-        if: steps.tag-check.outputs.exists == 'false'
         uses: flatt-security/setup-takumi-guard-npm@9a5d797c2085b6326d3a2985c08e3a114b9b88c1 # v1.1.1
 
       - name: Install dependencies
-        if: steps.tag-check.outputs.exists == 'false'
         run: pnpm install --frozen-lockfile
 
+      - name: Lint
+        run: pnpm run lint
+
       - name: Typecheck
-        if: steps.tag-check.outputs.exists == 'false'
         run: pnpm run typecheck
 
       - name: Test
-        if: steps.tag-check.outputs.exists == 'false'
         run: pnpm test
 
       - name: Build
-        if: steps.tag-check.outputs.exists == 'false'
         run: pnpm run build
 
       - name: Verify build output
-        if: steps.tag-check.outputs.exists == 'false'
         run: |
           if [ ! -f "dist/index.mjs" ]; then
             echo "❌ Build failed - dist/index.mjs not found"
@@ -114,13 +144,11 @@ jobs:
           echo "✅ Build verification successful"
 
       - name: Publish to npm via trusted publishing
-        if: steps.tag-check.outputs.exists == 'false'
         run: npm publish --provenance --access public
 
       - name: Create and push tag
-        if: steps.tag-check.outputs.exists == 'false'
         env:
-          VERSION: ${{ steps.package.outputs.version }}
+          VERSION: ${{ needs.check.outputs.version }}
           EVENT_NAME: ${{ github.event_name }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -144,12 +172,11 @@ jobs:
 
       - name: Create GitHub Release with tag
         id: create-release
-        if: steps.tag-check.outputs.exists == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_BODY: ${{ github.event.pull_request.body }}
           EVENT_NAME: ${{ github.event_name }}
-          VERSION: ${{ steps.package.outputs.version }}
+          VERSION: ${{ needs.check.outputs.version }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
@@ -167,16 +194,12 @@ jobs:
           echo "url=$RELEASE_URL" >> "$GITHUB_OUTPUT"
 
       - name: Comment on PR - Success
-        if: |
-          always() &&
-          github.event_name == 'pull_request' &&
-          steps.tag-check.outputs.exists == 'false' &&
-          success()
+        if: always() && github.event_name == 'pull_request' && success()
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          VERSION: ${{ steps.package.outputs.version }}
-          PACKAGE_NAME: ${{ steps.package.outputs.name }}
+          VERSION: ${{ needs.check.outputs.version }}
+          PACKAGE_NAME: ${{ needs.check.outputs.name }}
           RELEASE_URL: ${{ steps.create-release.outputs.url }}
           SERVER_URL: ${{ github.server_url }}
           REPOSITORY: ${{ github.repository }}
@@ -190,31 +213,12 @@ jobs:
           - 🏷️ GitHub Release: ${RELEASE_URL}
           - 🔗 Workflow run: ${SERVER_URL}/${REPOSITORY}/actions/runs/${RUN_ID}"
 
-      - name: Comment on PR - Tag Exists
-        if: |
-          always() &&
-          github.event_name == 'pull_request' &&
-          steps.tag-check.outputs.exists == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          VERSION: ${{ steps.package.outputs.version }}
-        run: |
-          gh pr comment "${PR_NUMBER}" \
-            --body "⚠️ **Release skipped**: Tag v${VERSION} already exists
-
-          Please check the existing release or update the version in package.json."
-
       - name: Comment on PR - Failure
-        if: |
-          always() &&
-          github.event_name == 'pull_request' &&
-          steps.tag-check.outputs.exists == 'false' &&
-          failure()
+        if: always() && github.event_name == 'pull_request' && failure()
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          VERSION: ${{ steps.package.outputs.version }}
+          VERSION: ${{ needs.check.outputs.version }}
           SERVER_URL: ${{ github.server_url }}
           REPOSITORY: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
