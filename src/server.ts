@@ -58,7 +58,7 @@ function sanitize(error: unknown): string {
 // normalize the SDK's other numeric wrappers and Buffer (BYTES) — none of which
 // are JSON-safe by default — and fall back to `.toJSON()` for any other Spanner
 // class (SpannerDate / Struct / Interval / Float32 / PGNumeric / PGJsonb).
-function serializeValue(v: unknown): unknown {
+export function serializeValue(v: unknown): unknown {
   if (v === null || v === undefined) return v;
   if (typeof v !== "object") return v;
   if (Buffer.isBuffer(v)) return v.toString("base64");

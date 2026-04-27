@@ -1,12 +1,22 @@
 import { defineConfig } from "vitest/config";
 
-// Two projects so the dist smoke test can run without spinning up the
-// Spanner Omni container that the e2e suite needs.
+// Three projects so each suite only pays the cost it needs:
+//   - `unit` runs pure-JS tests; no Docker, no globalSetup.
+//   - `e2e` runs against the Spanner Omni container started by
+//     `test/global-setup.ts`.
+//   - `smoke` runs the dist build smoke test against the self-contained
+//     bundled server (no Spanner connection).
 export default defineConfig({
   test: {
     testTimeout: 30_000,
     hookTimeout: 60_000,
     projects: [
+      {
+        test: {
+          name: "unit",
+          include: ["test/unit/**/*.test.ts"],
+        },
+      },
       {
         test: {
           name: "e2e",
