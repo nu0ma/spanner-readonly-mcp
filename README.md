@@ -103,6 +103,8 @@ pnpm omni:down       # docker compose down (keep the volume for fast restarts)
 pnpm omni:reset      # docker compose down -v (drop the volume for a clean slate)
 ```
 
+For Spanner Omni lifecycle, readiness, and troubleshooting (arm64 segfaults, CI debug artifacts), see [docs/dev/spanner-omni.md](docs/dev/spanner-omni.md).
+
 Direct execution against a real Spanner instance (build first, then run):
 
 ```bash
