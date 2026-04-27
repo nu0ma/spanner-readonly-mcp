@@ -1,3 +1,11 @@
+// Disable GCE metadata server probing before any google-auth-library code
+// loads. With SPANNER_EMULATOR_HOST set we never authenticate against real
+// GCP, but gcp-metadata still pings the metadata endpoint during client
+// construction and emits `MetadataLookupWarning` on CI runners where the
+// probe times out with an unmapped error code. See
+// https://github.com/googleapis/gcp-metadata#environment-variables
+process.env.METADATA_SERVER_DETECTION ??= "none";
+
 import type { Database, Instance } from "@google-cloud/spanner";
 import { Spanner } from "@google-cloud/spanner";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
