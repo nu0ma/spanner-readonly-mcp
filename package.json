@@ -49,7 +49,11 @@
     "lint:fix": "biome check --write",
     "test": "vitest run",
     "test:watch": "vitest",
-    "inspect": "pnpm exec @modelcontextprotocol/inspector node dist/index.mjs"
+    "inspect": "pnpm exec @modelcontextprotocol/inspector node dist/index.mjs",
+    "omni:up": "docker compose up -d",
+    "omni:down": "docker compose down",
+    "omni:reset": "docker compose down -v",
+    "omni:logs": "docker compose logs -f spanner-omni"
   },
   "dependencies": {
     "@google-cloud/spanner": "8.6.0"

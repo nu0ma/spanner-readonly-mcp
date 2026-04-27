@@ -94,6 +94,15 @@ pnpm dev             # run from source without building
 pnpm test            # vitest, starts Spanner Omni via docker compose
 ```
 
+`pnpm test` brings Spanner Omni up and tears it down automatically, but you can also drive the container manually — handy when iterating with `pnpm test:watch`, inspecting crash-loop logs, or wiping a corrupted volume:
+
+```bash
+pnpm omni:up         # docker compose up -d (start in the background)
+pnpm omni:logs       # docker compose logs -f spanner-omni
+pnpm omni:down       # docker compose down (keep the volume for fast restarts)
+pnpm omni:reset      # docker compose down -v (drop the volume for a clean slate)
+```
+
 Direct execution against a real Spanner instance (build first, then run):
 
 ```bash

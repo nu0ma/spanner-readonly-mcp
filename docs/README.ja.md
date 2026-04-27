@@ -94,6 +94,15 @@ pnpm dev             # ビルドせずにソースから実行
 pnpm test            # vitest (docker compose で Spanner Omni を起動)
 ```
 
+`pnpm test` は Spanner Omni を自動で起動・停止しますが、`pnpm test:watch` で繰り返しテストする際にコンテナを立てっぱなしにしたい、クラッシュループ時にログを直接追いたい、ボリュームを完全リセットしたい、といった場合に手動操作も可能です:
+
+```bash
+pnpm omni:up         # docker compose up -d（バックグラウンドで起動）
+pnpm omni:logs       # docker compose logs -f spanner-omni
+pnpm omni:down       # docker compose down（volume を保持して高速再起動）
+pnpm omni:reset      # docker compose down -v（volume も削除して完全クリーン）
+```
+
 実 Spanner に対して直接実行する場合 (先に build が必要):
 
 ```bash
