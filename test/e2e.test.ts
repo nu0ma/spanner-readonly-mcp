@@ -2,6 +2,7 @@ import type { Database, Instance } from "@google-cloud/spanner";
 import { Spanner } from "@google-cloud/spanner";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createServer, MAX_ROWS, QUERY_TIMEOUT_MS } from "../src/server.js";
 
@@ -41,6 +42,9 @@ const DDL = [
 let spanner: Spanner;
 let database: Database;
 let client: Client;
+let server: McpServer;
+let clientTransport: InMemoryTransport;
+let serverTransport: InMemoryTransport;
 
 function parseContent(result: Awaited<ReturnType<typeof client.callTool>>): any {
   const text = result.content as Array<{ type: string; text: string }>;
@@ -70,6 +74,12 @@ async function getOrCreateDatabase(instance: Instance): Promise<Database> {
 
 beforeAll(async () => {
   process.env.SPANNER_EMULATOR_HOST = "127.0.0.1:15000";
+  // Disable @google-cloud/spanner's built-in OpenTelemetry metrics. Even when
+  // running against an emulator (insecure creds path), this is belt-and-braces
+  // insurance against the MetricsTracerFactory's setInterval keeping the Node
+  // event loop alive past test teardown — the original cause of vitest's
+  // "Timeout terminating forks worker" warning.
+  process.env.SPANNER_DISABLE_BUILTIN_METRICS = "true";
 
   spanner = new Spanner({ projectId: PROJECT_ID });
 
@@ -98,8 +108,8 @@ beforeAll(async () => {
     },
   ]);
   // Wire MCP server + client via InMemoryTransport
-  const server = createServer(database);
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  server = createServer(database);
+  [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
 
   client = new Client({ name: "test-client", version: "1.0.0" });
@@ -107,10 +117,34 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await client?.close();
-  await database?.close();
+  // Close every handle we opened, in dependency order (consumer → producer).
+  // Use Promise.allSettled so a single failure can't strand a later close;
+  // any rejection is logged but not thrown, matching test-teardown norms.
+  // The previous afterAll left the McpServer (and its in-memory transports)
+  // open — McpServer.connect installs protocol-level timers via the shared
+  // Protocol class, and an unclosed server kept Node's event loop busy until
+  // vitest force-killed the forks worker after ~10s.
+  const results = await Promise.allSettled([
+    client?.close(),
+    server?.close(),
+    clientTransport?.close(),
+    serverTransport?.close(),
+    database?.close(),
+  ]);
+  // Spanner.close() is synchronous (returns void) but kicks off async cleanup
+  // (gRPC client shutdown, metrics tracer reset). Call it after the database
+  // session pool has drained so we don't race outstanding RPCs.
   spanner?.close();
+
+  for (const r of results) {
+    if (r.status === "rejected") {
+      // Surface but don't fail the suite — the tests themselves already passed.
+      console.error("afterAll close error:", r.reason);
+    }
+  }
+
   delete process.env.SPANNER_EMULATOR_HOST;
+  delete process.env.SPANNER_DISABLE_BUILTIN_METRICS;
 });
 
 describe("list_tables", () => {
