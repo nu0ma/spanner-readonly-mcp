@@ -74,9 +74,24 @@ async function probeGrpc(): Promise<void> {
   }
 }
 
+function captureDiagnostic(cmd: string): string {
+  // Best-effort: any failure here must not mask the original timeout error.
+  try {
+    return execSync(cmd, {
+      ...COMPOSE_OPTS,
+      encoding: "utf8",
+      timeout: 5_000,
+    }).trim();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return `<failed to capture: ${message}>`;
+  }
+}
+
 async function waitForSpannerOmni(): Promise<void> {
   let consecutiveOk = 0;
   let lastError: unknown;
+  const startedAt = Date.now();
 
   for (let i = 0; i < MAX_RETRIES; i++) {
     if (logsContainReady()) {
@@ -94,13 +109,24 @@ async function waitForSpannerOmni(): Promise<void> {
     await sleep(RETRY_INTERVAL_MS);
   }
 
+  const elapsedSec = ((Date.now() - startedAt) / 1000).toFixed(1);
   const detail =
     lastError instanceof Error
       ? lastError.message
       : String(lastError ?? "no probe attempts succeeded");
+
+  // Surface container state and recent logs in the thrown error so a CI or
+  // local operator can diagnose image-pull failures, OOM, crash loops, etc.
+  // without having to re-run `docker compose ps`/`logs` by hand.
+  const psOutput = captureDiagnostic("docker compose ps");
+  const logsOutput = captureDiagnostic(`docker compose logs --tail=50 ${SERVICE}`);
+
   throw new Error(
     `Spanner Omni did not stabilize within ${(MAX_RETRIES * RETRY_INTERVAL_MS) / 1000}s ` +
-      `(needed ${REQUIRED_CONSECUTIVE_OK} consecutive successful gRPC probes). Last probe error: ${detail}`,
+      `(needed ${REQUIRED_CONSECUTIVE_OK} consecutive successful gRPC probes). ` +
+      `Elapsed: ${elapsedSec}s. Last probe error: ${detail}\n\n` +
+      `--- docker compose ps ---\n${psOutput}\n\n` +
+      `--- docker compose logs --tail=50 ${SERVICE} ---\n${logsOutput}`,
   );
 }
 
@@ -121,7 +147,10 @@ export async function setup() {
 
 export function teardown() {
   try {
-    execSync("docker compose down -v", COMPOSE_OPTS);
+    // The `spanner` volume is intentionally preserved across runs so the next
+    // `pnpm test` skips Spanner Omni's cold-start (tens of seconds to minutes).
+    // For a full reset, run `docker compose down -v` manually.
+    execSync("docker compose down", COMPOSE_OPTS);
   } catch {
     // Ignore errors during teardown (Docker may already be stopped)
   }
