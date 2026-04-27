@@ -9,12 +9,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm build` — bundle to `dist/` with tsdown; inlines `__SPANNER_MCP_VERSION__` from package.json
 - `pnpm start` — run the built `dist/index.mjs` (requires `pnpm build` first)
 - `pnpm typecheck` — `tsc --noEmit`
-- `pnpm test` — vitest; globalSetup starts the Spanner emulator via `docker compose up -d --wait` and tears it down after. Docker must be running.
-- `pnpm test:watch` — vitest watch mode (emulator still required)
+- `pnpm test` — vitest; globalSetup starts Spanner Omni via `docker compose up -d` and polls its container logs for the readiness banner before tests run. Tears down (with `-v`) after. Docker must be running.
+- `pnpm test:watch` — vitest watch mode (Spanner Omni still required)
 - Run a single test: `pnpm exec vitest run test/e2e.test.ts -t "<test name pattern>"`
 - `pnpm inspect` — launch the MCP Inspector against the built server
 
-Runtime env vars (required for `dev`/`start`): `SPANNER_PROJECT`, `SPANNER_INSTANCE`, `SPANNER_DATABASE`. Optional `SPANNER_EMULATOR_HOST` (e.g. `127.0.0.1:9010`) points the client at a local emulator.
+Runtime env vars (required for `dev`/`start`): `SPANNER_PROJECT`, `SPANNER_INSTANCE`, `SPANNER_DATABASE`. Optional `SPANNER_EMULATOR_HOST` (e.g. `127.0.0.1:15000` for Spanner Omni single-server, or `127.0.0.1:9010` for the legacy emulator) points the client at a local Spanner.
 
 ## Architecture
 
@@ -55,6 +55,6 @@ All tool handlers catch and route through `sanitize()`, which returns only the f
 
 ## Tests
 
-- `test/e2e.test.ts` drives the real MCP server against the emulator.
-- `test/global-setup.ts` owns the Docker lifecycle and polls `localhost:9020` (emulator REST port) until ready before tests run. The server under test connects via the gRPC port (`9010`) configured in `docker-compose.yml`.
+- `test/e2e.test.ts` drives the real MCP server against Spanner Omni's single-server container.
+- `test/global-setup.ts` owns the Docker lifecycle and polls `docker compose logs spanner-omni` for the "Spanner is ready" banner before tests run. The server under test connects via gRPC `127.0.0.1:15000` and the pre-provisioned `default` project / `default` instance.
 - Tests require Docker; there's no mock path.

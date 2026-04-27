@@ -1,9 +1,11 @@
 services:
-  spanner-emulator:
-    # Pinned to the `:latest` digest at the time of this commit so CI and local
-    # dev are reproducible. Bump deliberately when adopting a new emulator
-    # release; do not revert to a moving tag.
-    image: gcr.io/cloud-spanner-emulator/emulator@sha256:350fa0e504aff363c386a237ef4755f3332deca6f6aa3335664c5b8245495e9c
+  spanner-omni:
+    image: us-docker.pkg.dev/spanner-omni/images/spanner-omni:2026.r1-beta
+    command: start-single-server
     ports:
-      - "127.0.0.1:9010:9010"
-      - "127.0.0.1:9020:9020"
+      - "127.0.0.1:15000:15000"
+    volumes:
+      - spanner:/spanner
+
+volumes:
+  spanner:
