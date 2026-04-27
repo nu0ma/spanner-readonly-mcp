@@ -48,4 +48,26 @@ jobs:
         run: pnpm run build
 
       - name: Test
-        run: pnpm run test
+        run: pnpm run test 2>&1 | tee omni-debug-vitest.log
+        shell: bash
+
+      - name: Collect Spanner Omni debug info
+        if: failure()
+        run: |
+          mkdir -p omni-debug
+          docker compose logs spanner-omni > omni-debug/docker-compose-logs.txt 2>&1 || true
+          docker compose ps > omni-debug/docker-compose-ps.txt 2>&1 || true
+          docker volume ls > omni-debug/docker-volume-ls.txt 2>&1 || true
+          docker images | grep -i spanner > omni-debug/docker-images-spanner.txt 2>&1 || true
+          if [ -f omni-debug-vitest.log ]; then
+            mv omni-debug-vitest.log omni-debug/vitest-output.log
+          fi
+
+      - name: Upload Omni debug artifact
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: spanner-omni-debug-${{ github.run_id }}-${{ github.run_attempt }}
+          path: omni-debug/
+          retention-days: 7
+          if-no-files-found: warn
