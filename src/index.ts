@@ -26,18 +26,35 @@ async function main() {
 }
 
 let shuttingDown = false;
+const SHUTDOWN_TIMEOUT_MS = 5000;
 async function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
+  // Safety net: if any close() hangs (e.g. in-flight gRPC stream that never
+  // settles), force-exit so the process doesn't linger as a zombie.
+  const forceExit = setTimeout(() => {
+    console.error("Shutdown timed out; forcing exit");
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+  forceExit.unref();
   let exitCode = 0;
-  try {
-    await server.close();
-    await database.close();
-    await spanner.close();
-  } catch (error) {
-    console.error("Shutdown error:", error);
-    exitCode = 1;
+  // Close in order (server → database → spanner) but isolate each step so a
+  // partial failure does not skip the remaining handles. Otherwise, e.g. a
+  // server.close() rejection would leak the Spanner session pool / gRPC
+  // channel and delay process exit.
+  for (const [name, fn] of [
+    ["server", () => server.close()],
+    ["database", () => database.close()],
+    ["spanner", () => spanner.close()],
+  ] as const) {
+    try {
+      await fn();
+    } catch (error) {
+      console.error(`Shutdown error closing ${name}:`, error);
+      exitCode = 1;
+    }
   }
+  clearTimeout(forceExit);
   process.exit(exitCode);
 }
 
