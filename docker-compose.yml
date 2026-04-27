@@ -2,6 +2,11 @@ services:
   spanner-omni:
     image: us-docker.pkg.dev/spanner-omni/images/spanner-omni:2026.r1-beta
     command: start-single-server
+    # On Apple Silicon (arm64) Omni 2026.r1-beta crashloops with mixed
+    # SIGSEGV/SIGBUS/SIGILL signals on default Docker resources.
+    # Capping CPU shares to 2 eliminates the crash storm; root cause
+    # appears upstream and not yet fixed in this beta image.
+    cpus: 2.0
     ports:
       - "127.0.0.1:15000:15000"
     volumes:

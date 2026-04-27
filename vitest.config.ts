@@ -23,7 +23,10 @@ export default defineConfig({
           include: ["test/e2e.test.ts"],
           globalSetup: ["./test/global-setup.ts"],
           testTimeout: 30_000,
-          hookTimeout: 60_000,
+          // Omni's first DDL after boot is ~37s on arm64 (intrinsic schema-cache
+          // initialization), and a single `server` SIGSEGV restart can extend
+          // that further. 60s left no headroom; 120s comfortably covers both.
+          hookTimeout: 120_000,
         },
       },
       {

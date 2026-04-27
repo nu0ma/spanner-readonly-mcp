@@ -12,7 +12,7 @@ Spanner Omni is the production Spanner binary repackaged for self-hosting. We ru
 
 ## Lifecycle
 
-- **Automatic** — `pnpm test`'s vitest `globalSetup` runs `docker compose up -d`, waits for the readiness signal, then runs `docker compose down -v` after the suite. Docker must already be running.
+- **Automatic** — `pnpm test`'s vitest `globalSetup` runs `docker compose up -d`, waits for the readiness signal, then runs `docker compose down` after the suite (volume preserved; use `pnpm omni:reset` for a clean slate). Docker must already be running.
 - **Manual** — for `pnpm test:watch` or repeated reruns it's faster to keep the container up:
   - `pnpm omni:up` — start in the background
   - `pnpm omni:down` — stop, **keep** the volume (fast restart next time)
@@ -29,11 +29,11 @@ Spanner Omni is the production Spanner binary repackaged for self-hosting. We ru
 
 Symptom: `Spanner is ready` followed by repeated `signal: segmentation fault` lines from `zone_services`, `base_services`, or `server`. The readiness probe never gets its 3-streak and times out.
 
-Workaround: `pnpm omni:reset && pnpm omni:up` for a clean volume often unsticks it. If it persists, see the open issue or contact maintainers. <!-- TODO: link a tracking issue once root cause is known. -->
+Mitigation (already applied): `docker-compose.yml` caps the container at `cpus: 2.0`. Empirically this eliminates the startup crash storm on Apple Silicon / OrbStack — controlled tests showed 30+ supervisor restarts in 90 s on default resources versus zero with `cpus: 2.0`. No additional action is required for normal use; if you still hit a crash, `pnpm omni:reset && pnpm omni:up` for a clean volume usually unsticks it. The root cause appears to be a mixed-signal (SIGSEGV/SIGBUS/SIGILL) instability in the upstream `2026.r1-beta` arm64 binary when scheduled across many vCPUs; `linux/amd64` via Rosetta is not viable because the launcher requires AMD64 v3 (AVX2/BMI2) which Rosetta does not emulate.
 
 ### CI (Linux x86_64): stable
 
-GitHub Actions `ubuntu-latest` has not reproduced the crashloop. When the Test step fails, the workflow uploads an `omni-debug-{run_id}-{run_attempt}` artifact containing `docker compose logs`, `docker compose ps`, volume/image state, and vitest stdout (7-day retention) — start there for post-mortems.
+GitHub Actions `ubuntu-latest` has not reproduced the crashloop. When the Test step fails, the workflow uploads a `spanner-omni-debug-{run_id}-{run_attempt}` artifact containing `docker compose logs`, `docker compose ps`, volume/image state, and vitest stdout (7-day retention) — start there for post-mortems.
 
 ### Cold start is slow
 
