@@ -23,7 +23,7 @@ The server reads these at runtime (the Claude Code plugin prompts for them on in
 | `SPANNER_PROJECT` | Yes | GCP project ID |
 | `SPANNER_INSTANCE` | Yes | Spanner instance ID |
 | `SPANNER_DATABASE` | Yes | Spanner database ID |
-| `SPANNER_EMULATOR_HOST` | No | `host:port` to point at a local Spanner (`127.0.0.1:15000` for Spanner Omni single-server, `127.0.0.1:9010` for the legacy emulator). Leave unset for production. |
+| `SPANNER_EMULATOR_HOST` | No | `host:port` to point at a local Spanner (e.g. `127.0.0.1:15000` for Spanner Omni, the recommended local backend). The legacy `gcr.io/cloud-spanner-emulator/emulator` (port `9010`) also works but is no longer covered by tests. Leave unset for production. |
 
 ## Usage
 

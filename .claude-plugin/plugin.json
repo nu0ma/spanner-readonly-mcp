@@ -35,8 +35,8 @@
     },
     "SPANNER_EMULATOR_HOST": {
       "type": "string",
-      "title": "Spanner Emulator Host (optional)",
-      "description": "Set to host:port to point at a local Spanner instead of real Cloud Spanner (e.g. 127.0.0.1:15000 for Spanner Omni single-server, or 127.0.0.1:9010 for the legacy emulator). Leave blank for production."
+      "title": "Local Spanner Host (optional)",
+      "description": "Set to host:port to point at a local Spanner instead of real Cloud Spanner (e.g. 127.0.0.1:15000 for Spanner Omni, the recommended local backend). The legacy gcr.io/cloud-spanner-emulator/emulator (port 9010) also works but is no longer covered by tests. Leave blank for production."
     }
   }
 }

@@ -23,7 +23,7 @@ gcloud auth application-default login
 | `SPANNER_PROJECT` | はい | GCP プロジェクト ID |
 | `SPANNER_INSTANCE` | はい | Spanner インスタンス ID |
 | `SPANNER_DATABASE` | はい | Spanner データベース ID |
-| `SPANNER_EMULATOR_HOST` | いいえ | `host:port` を指定するとローカル Spanner に向く（Spanner Omni single-server なら `127.0.0.1:15000`、旧 emulator なら `127.0.0.1:9010`）。本番では未設定のまま。 |
+| `SPANNER_EMULATOR_HOST` | いいえ | `host:port` を指定するとローカル Spanner に向く（推奨は Spanner Omni の `127.0.0.1:15000`）。旧 `gcr.io/cloud-spanner-emulator/emulator`（`9010`）も動作するがテスト対象外。本番では未設定のまま。 |
 
 ## 使い方
 
