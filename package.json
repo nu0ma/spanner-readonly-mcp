@@ -48,6 +48,7 @@
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "test": "vitest run",
+    "test:smoke": "vitest run --project smoke",
     "test:watch": "vitest",
     "inspect": "pnpm exec @modelcontextprotocol/inspector node dist/index.mjs",
     "omni:up": "docker compose up -d",
