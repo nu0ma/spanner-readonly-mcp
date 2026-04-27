@@ -23,7 +23,7 @@ The server reads these at runtime (the Claude Code plugin prompts for them on in
 | `SPANNER_PROJECT` | Yes | GCP project ID |
 | `SPANNER_INSTANCE` | Yes | Spanner instance ID |
 | `SPANNER_DATABASE` | Yes | Spanner database ID |
-| `SPANNER_EMULATOR_HOST` | No | `host:port` (e.g. `127.0.0.1:9010`) to point at a local Spanner emulator. Leave unset for production. |
+| `SPANNER_EMULATOR_HOST` | No | `host:port` to point at a local Spanner (`127.0.0.1:15000` for Spanner Omni single-server, `127.0.0.1:9010` for the legacy emulator). Leave unset for production. |
 
 ## Usage
 
@@ -91,7 +91,7 @@ Error messages returned to clients are sanitized (first line only, prefixed `REG
 pnpm install
 pnpm build           # compile to dist/
 pnpm dev             # run from source without building
-pnpm test            # vitest, starts the Spanner emulator via docker compose
+pnpm test            # vitest, starts Spanner Omni via docker compose
 ```
 
 Direct execution against a real Spanner instance (build first, then run):

@@ -5,8 +5,11 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createServer, MAX_ROWS, QUERY_TIMEOUT_MS } from "../src/server.js";
 
-const PROJECT_ID = "test-project";
-const INSTANCE_ID = "test-instance";
+// Spanner Omni's single-server mode pre-provisions project="default" /
+// instance="default" and listens on gRPC 15000. We only need to manage
+// the database lifecycle ourselves.
+const PROJECT_ID = "default";
+const INSTANCE_ID = "default";
 const DATABASE_ID = "test-db";
 
 const DDL = [
@@ -48,20 +51,6 @@ function errorText(result: Awaited<ReturnType<typeof client.callTool>>): string 
   return (result.content as Array<{ type: string; text: string }>)[0].text;
 }
 
-async function getOrCreateInstance(spanner: Spanner): Promise<Instance> {
-  const instance = spanner.instance(INSTANCE_ID);
-  const [exists] = await instance.exists();
-  if (exists) return instance;
-
-  const [inst, operation] = await spanner.createInstance(INSTANCE_ID, {
-    config: "emulator-config",
-    nodes: 1,
-    displayName: INSTANCE_ID,
-  });
-  await operation.promise();
-  return inst;
-}
-
 async function getOrCreateDatabase(instance: Instance): Promise<Database> {
   const database = instance.database(DATABASE_ID);
   const [exists] = await database.exists();
@@ -80,11 +69,11 @@ async function getOrCreateDatabase(instance: Instance): Promise<Database> {
 }
 
 beforeAll(async () => {
-  process.env.SPANNER_EMULATOR_HOST = "127.0.0.1:9010";
+  process.env.SPANNER_EMULATOR_HOST = "127.0.0.1:15000";
 
   spanner = new Spanner({ projectId: PROJECT_ID });
 
-  const instance = await getOrCreateInstance(spanner);
+  const instance = spanner.instance(INSTANCE_ID);
   database = await getOrCreateDatabase(instance);
 
   // Seed test data
