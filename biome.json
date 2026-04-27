@@ -13,7 +13,9 @@
       "*.mjs",
       "*.json",
       "!**/dist",
-      "!**/node_modules"
+      "!**/node_modules",
+      "!.claude",
+      "!.vscode"
     ]
   },
   "formatter": {
