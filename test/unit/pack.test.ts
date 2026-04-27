@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 
 // Repo root, resolved relative to this test file so the test is robust
@@ -120,9 +120,7 @@ describe("npm pack publish allowlist", () => {
   });
 
   it("does not publish source TypeScript", () => {
-    const leaks = actualFiles.filter(
-      (f) => f.endsWith(".ts") && !f.endsWith(".d.ts"),
-    );
+    const leaks = actualFiles.filter((f) => f.endsWith(".ts") && !f.endsWith(".d.ts"));
     expect(leaks).toEqual([]);
   });
 });
