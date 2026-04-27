@@ -47,6 +47,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check",
     "lint:fix": "biome check --write",
+    "pretest": "pnpm run build",
     "test": "vitest run",
     "test:smoke": "vitest run --project smoke",
     "test:watch": "vitest",

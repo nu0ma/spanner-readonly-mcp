@@ -1,3 +1,11 @@
+// Disable GCE metadata server probing before any google-auth-library code
+// loads. The readiness probe constructs a Spanner client during global setup,
+// which triggers `gcp-metadata`'s probe before vitest loads test files (where
+// the same env var is also set as a belt-and-suspenders default for worker
+// processes). See test/e2e.test.ts and
+// https://github.com/googleapis/gcp-metadata#environment-variables
+process.env.METADATA_SERVER_DETECTION ??= "none";
+
 import { type ExecSyncOptions, execSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { Spanner } from "@google-cloud/spanner";
