@@ -108,6 +108,11 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: pnpm
 
+      # Node 24 bundles an npm older than 11.15.0, which `npm stage publish`
+      # requires. Pin to an exact version for reproducible releases.
+      - name: Ensure npm supports staged publishing
+        run: npm install -g npm@11.15.0
+
       - name: Update package.json version
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
         env:
@@ -143,8 +148,12 @@ jobs:
           fi
           echo "✅ Build verification successful"
 
-      - name: Publish to npm via trusted publishing
-        run: npm publish --provenance --access public
+      # Stage the publish instead of releasing directly. The tarball lands in
+      # npm's stage queue; a maintainer must approve it with 2FA via
+      # `npm stage approve <id>` or npmjs.com before it becomes installable.
+      # Requires the trusted publisher on npmjs.com to allow `npm stage`.
+      - name: Stage publish to npm via trusted publishing
+        run: npm stage publish --provenance --access public
 
       - name: Create and push tag
         env:
@@ -206,10 +215,12 @@ jobs:
           RUN_ID: ${{ github.run_id }}
         run: |
           gh pr comment "${PR_NUMBER}" \
-            --body "✅ **Release v${VERSION} completed successfully!**
+            --body "🟡 **Release v${VERSION} staged — awaiting maintainer approval**
 
-          - 📦 npm install: \`npm install ${PACKAGE_NAME}@${VERSION}\`
-          - 📦 npm package: https://www.npmjs.com/package/${PACKAGE_NAME}/v/${VERSION}
+          The package is in npm's stage queue. A maintainer must approve it with 2FA before it becomes installable:
+          - ✅ Approve: \`npm stage approve\` (or via the stage queue on npmjs.com)
+          - 📦 After approval — npm install: \`npm install ${PACKAGE_NAME}@${VERSION}\`
+          - 📦 After approval — npm package: https://www.npmjs.com/package/${PACKAGE_NAME}/v/${VERSION}
           - 🏷️ GitHub Release: ${RELEASE_URL}
           - 🔗 Workflow run: ${SERVER_URL}/${REPOSITORY}/actions/runs/${RUN_ID}"
 
