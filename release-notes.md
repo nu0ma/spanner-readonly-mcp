@@ -1,14 +1,14 @@
 ## What's Changed
-* chore: use pnpm exec for inspect script by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/32
-* docs: add CLAUDE.md by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/31
-* ci: route pnpm installs through Takumi Guard by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/34
-* chore(deps): bundle MCP SDK and zod into dist by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/36
-* chore: introduce Renovate with shared config by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/37
-* ci: use GitHub App token for release PR creation by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/40
-* Release v0.0.10 by @spanner-readonly-mcp-release-bot[bot] in https://github.com/nu0ma/spanner-readonly-mcp/pull/41
-* fix: pin publish registry to npmjs.org by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/42
+* ci: introduce Biome and simplify release workflow by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/44
+* chore: pin onlyBuiltDependencies in pnpm-workspace.yaml by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/45
+* test: switch E2E test backend to Spanner Omni by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/46
+* ci: adopt npm staged publishing for releases by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/48
+* chore: pin .mcp.json to an exact version by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/49
+* chore(deps): update dependency @biomejs/biome to v2.4.15 by @renovate[bot] in https://github.com/nu0ma/spanner-readonly-mcp/pull/52
+* security: block non-registry npm install sources in .npmrc by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/50
+* ci: sign release PR commits (verified) so they pass main's ruleset by @nu0ma in https://github.com/nu0ma/spanner-readonly-mcp/pull/55
 
 ## New Contributors
-* @spanner-readonly-mcp-release-bot[bot] made their first contribution in https://github.com/nu0ma/spanner-readonly-mcp/pull/41
+* @renovate[bot] made their first contribution in https://github.com/nu0ma/spanner-readonly-mcp/pull/52
 
-**Full Changelog**: https://github.com/nu0ma/spanner-readonly-mcp/compare/v0.0.9...v0.0.11
+**Full Changelog**: https://github.com/nu0ma/spanner-readonly-mcp/compare/v0.0.11...v0.0.12
