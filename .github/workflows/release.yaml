@@ -152,8 +152,13 @@ jobs:
       # npm's stage queue; a maintainer must approve it with 2FA via
       # `npm stage approve <id>` or npmjs.com before it becomes installable.
       # Requires the trusted publisher on npmjs.com to allow `npm stage`.
+      #
+      # --allow-directory=all overrides the repo .npmrc (allow-directory=none,
+      # set for install-source hardening): publishing packs the current dir as
+      # a "directory" spec, which that setting otherwise blocks with
+      # EALLOWDIRECTORY. The override is scoped to this publish command only.
       - name: Stage publish to npm via trusted publishing
-        run: npm stage publish --provenance --access public
+        run: npm stage publish --provenance --access public --allow-directory=all
 
       - name: Create and push tag
         env:
