@@ -109,10 +109,9 @@ jobs:
           cache: pnpm
 
       # Node 24 bundles an npm older than 11.15.0, which `npm stage publish`
-      # requires. Pin to ^11.15.0 to stay below v12 (where --allow-git flips
-      # to none by default).
+      # requires. Pin to an exact version for reproducible releases.
       - name: Ensure npm supports staged publishing
-        run: npm install -g npm@^11.15.0
+        run: npm install -g npm@11.15.0
 
       - name: Update package.json version
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
