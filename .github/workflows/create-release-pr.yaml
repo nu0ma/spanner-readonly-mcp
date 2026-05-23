@@ -75,6 +75,27 @@ jobs:
             fs.writeFileSync(path, JSON.stringify(m, null, 2) + '\n');
           "
 
+      - name: Sync .mcp.json pinned version
+        env:
+          VERSION: ${{ env.VERSION }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            const path = '.mcp.json';
+            const cfg = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const server = cfg.mcpServers[pkg.name];
+            server.args = server.args.map((a) =>
+              a === pkg.name || a.startsWith(pkg.name + '@')
+                ? pkg.name + '@' + process.env.VERSION
+                : a
+            );
+            fs.writeFileSync(path, JSON.stringify(cfg, null, 2) + '\n');
+          "
+          # .mcp.json is at the repo root, so biome formats it (unlike the
+          # nested plugin.json). Re-format so the release PR passes `pnpm lint`.
+          pnpm exec biome format --write .mcp.json
+
       - name: Get release notes
         id: release-notes
         env:
