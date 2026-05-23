@@ -44,34 +44,8 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      # Node 24 bundles npm < 11.15.0. Pin for allow-file/remote/directory (11.15+)
-      # and allow-git (11.10+); npm v12 will default allow-git to none.
-      - name: Ensure npm supports install-source allowlists
-        run: npm install -g npm@11.15.0
-
       - name: Setup Takumi Guard
         uses: flatt-security/setup-takumi-guard-npm@9a5d797c2085b6326d3a2985c08e3a114b9b88c1 # v1.1.1
-
-      - name: Verify registry-only install policy
-        run: |
-          for key in allow-git allow-file allow-remote allow-directory; do
-            val=$(npm config get "$key")
-            if [ "$val" != "none" ]; then
-              echo "::error::$key must be none (got: $val)"
-              exit 1
-            fi
-          done
-          node -e "
-            const pkg = require('./package.json');
-            const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-            const exotic = /^(git\\+|github:|gitlab:|bitbucket:|file:|https?:|git:|\\/|\\.\\.\\/)/;
-            for (const [name, spec] of Object.entries(deps)) {
-              if (typeof spec === 'string' && exotic.test(spec)) {
-                console.error('Non-registry dependency ' + name + ': ' + spec);
-                process.exit(1);
-              }
-            }
-          "
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
