@@ -388,8 +388,8 @@ packages:
     resolution: {integrity: sha512-MmaX6HeSvyPbWGwFq7mXdo0uQZLGBYCwziiLIGq5JVX+/bdI3SAq6bP98trV5eTWfLuvsMcIC1YJOF2vfteLFA==}
     engines: {node: '>=14.0.0'}
 
-  '@google-cloud/projectify@5.0.0':
-    resolution: {integrity: sha512-XXQLaIcLrOAMWvRrzz+mlUGtN6vlVNja3XQbMqRi/V7XJTAVwib3VcKd7oRwyZPkp7rBVlHGcaqdyGRrcnkhlA==}
+  '@google-cloud/projectify@5.0.1':
+    resolution: {integrity: sha512-yAIqOAlDwx1nPmmA0WICFMSGttVuWX97HpphN71JQ7G+tD/Q6lHbiCTcMJ9r2+PwX6sIwK3ahO4FdSNt5pwhFg==}
     engines: {node: '>=18'}
 
   '@google-cloud/promisify@4.1.0':
@@ -1971,8 +1971,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@11.1.0:
-    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+  uuid@11.1.1:
+    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
   uuid@9.0.1:
@@ -2445,7 +2445,7 @@ snapshots:
 
   '@google-cloud/projectify@4.0.0': {}
 
-  '@google-cloud/projectify@5.0.0': {}
+  '@google-cloud/projectify@5.0.1': {}
 
   '@google-cloud/promisify@4.1.0': {}
 
@@ -2460,7 +2460,7 @@ snapshots:
       '@google-cloud/monitoring': 5.3.1
       '@google-cloud/opentelemetry-resource-util': 2.4.0(@opentelemetry/resources@1.30.1(@opentelemetry/api@1.9.1))
       '@google-cloud/precise-date': 5.0.0
-      '@google-cloud/projectify': 5.0.0
+      '@google-cloud/projectify': 5.0.1
       '@google-cloud/promisify': 5.0.0
       '@grpc/grpc-js': 1.14.3
       '@grpc/proto-loader': 0.8.0
@@ -2490,7 +2490,7 @@ snapshots:
       stream-events: 1.0.5
       teeny-request: 10.1.2
       through2: 4.0.2
-      uuid: 11.1.0
+      uuid: 11.1.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -3983,7 +3983,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  uuid@11.1.0: {}
+  uuid@11.1.1: {}
 
   uuid@9.0.1: {}
 
