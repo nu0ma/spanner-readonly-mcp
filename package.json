@@ -52,7 +52,7 @@
     "inspect": "pnpm exec @modelcontextprotocol/inspector node dist/index.mjs"
   },
   "dependencies": {
-    "@google-cloud/spanner": "8.8.0"
+    "@google-cloud/spanner": "8.8.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.2",
