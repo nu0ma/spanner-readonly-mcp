@@ -22,8 +22,8 @@ importers:
         specifier: 25.9.5
         version: 25.9.5
       tsdown:
-        specifier: 0.22.4
-        version: 0.22.4(tsx@4.23.0)(typescript@6.0.3)(unrun@0.2.36)
+        specifier: 0.22.5
+        version: 0.22.5(tsx@4.23.0)(typescript@6.0.3)(unrun@0.2.36)
       tsx:
         specifier: 4.23.0
         version: 4.23.0
@@ -1981,18 +1981,18 @@ packages:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
     hasBin: true
 
-  tsdown@0.22.4:
-    resolution: {integrity: sha512-3a5FsNL2fH2jw3ozvFUuPMBgS0xXjX9wpZShHyB4klXelVhyaNw5Q5WA9TPCNeoGYpRZEc4OZdMx5wT4Fkma3A==}
+  tsdown@0.22.5:
+    resolution: {integrity: sha512-0iEpnuOVBGo7mPW+FlyglErHBExYOAlpLBlCl/QcTrRUJ+TF2prfzl6ipQS5VsjJejFXnmbkdh0Ta53B3stWxg==}
     engines: {node: ^22.18.0 || >=24.11.0}
     hasBin: true
     peerDependencies:
       '@arethetypeswrong/core': ^0.18.1
-      '@tsdown/css': 0.22.4
-      '@tsdown/exe': 0.22.4
+      '@tsdown/css': 0.22.5
+      '@tsdown/exe': 0.22.5
       '@vitejs/devtools': '*'
       publint: ^0.3.8
       tsx: '*'
-      typescript: ^5.0.0 || ^6.0.0
+      typescript: ^5.0.0 || ^6.0.0 || ^7.0.0
       unplugin-unused: ^0.5.0
       unrun: '*'
     peerDependenciesMeta:
@@ -4042,7 +4042,7 @@ snapshots:
 
   tree-kill@1.2.2: {}
 
-  tsdown@0.22.4(tsx@4.23.0)(typescript@6.0.3)(unrun@0.2.36):
+  tsdown@0.22.5(tsx@4.23.0)(typescript@6.0.3)(unrun@0.2.36):
     dependencies:
       ansis: 4.3.1
       cac: 7.0.0
