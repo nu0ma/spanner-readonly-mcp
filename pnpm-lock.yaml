@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@google-cloud/spanner':
-        specifier: 8.9.0
-        version: 8.9.0
+        specifier: 8.10.0
+        version: 8.10.0
     devDependencies:
       '@biomejs/biome':
         specifier: 2.5.3
@@ -375,8 +375,8 @@ packages:
     resolution: {integrity: sha512-N8qS6dlORGHwk7WjGXKOSsLjIjNINCPicsOX6gyyLiYk7mq3MtII96NZ9N2ahwA2vnkLmZODOIH9rlNniYWvCQ==}
     engines: {node: '>=18'}
 
-  '@google-cloud/spanner@8.9.0':
-    resolution: {integrity: sha512-YUm+m92VB/3JopYclmu9flXrTa8ms7YpmGAYDFeYkrj8T6BfhRBMJrkpCYkPd/u2CJucfl99Jn6HuBaAIlUsOA==}
+  '@google-cloud/spanner@8.10.0':
+    resolution: {integrity: sha512-BvFYGKzvxZlLcJWBKuZagpcel6xIiu3Ai8K11OG4SddMA3eqWLCW958N+fZSFVCsnrZtL+zdAf3gIwhEl9k4IQ==}
     engines: {node: '>=18'}
 
   '@grpc/grpc-js@1.14.3':
@@ -2521,7 +2521,7 @@ snapshots:
 
   '@google-cloud/promisify@5.0.0': {}
 
-  '@google-cloud/spanner@8.9.0':
+  '@google-cloud/spanner@8.10.0':
     dependencies:
       '@babel/core': 7.27.7
       '@babel/helpers': 7.27.6
