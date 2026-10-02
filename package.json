@@ -22,7 +22,7 @@
   "engines": {
     "node": ">=24.21.0"
   },
-  "packageManager": "pnpm@11.27.1",
+  "packageManager": "pnpm@11.28.0",
   "type": "module",
   "main": "dist/index.mjs",
   "bin": {
