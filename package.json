@@ -55,7 +55,7 @@
     "@google-cloud/spanner": "8.13.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.3",
+    "@biomejs/biome": "2.6.3",
     "@modelcontextprotocol/sdk": "1.32.1",
     "@types/node": "25.9.9",
     "tsdown": "0.23.1",
